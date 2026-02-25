@@ -1,0 +1,3116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Memory Score™ | Omnicom Media Canada</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@0.294.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <style>
+    ::-webkit-scrollbar{width:8px;height:8px}
+    ::-webkit-scrollbar-track{background:#f1f5f9;border-radius:4px}
+    ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px}
+    .tab-btn.active{background:#10b981;color:white}
+    .stage-card:hover{box-shadow:0 4px 12px rgba(0,0,0,0.1)}
+    input[type="range"]{-webkit-appearance:none;height:6px;border-radius:3px;background:#e2e8f0}
+    input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#10b981;cursor:pointer}
+    
+    /* Screen-only elements */
+    .print-hide { display: block; }
+    .print-show { display: none; }
+    
+    /* Print styles */
+    @media print {
+      /* Page setup - margin:0 removes browser header/footer (URL, title, date) */
+      @page { 
+        size: landscape;
+        margin: 0;
+      }
+      
+      /* Hide screen-only elements */
+      .print-hide, 
+      .pdf-hide,
+      button,
+      input,
+      textarea,
+      select,
+      nav,
+      .tab-btn,
+      .fixed { 
+        display: none !important; 
+      }
+      
+      /* Show print-only elements */
+      .print-show,
+      .pdf-show { 
+        display: block !important; 
+      }
+      
+      /* Reset background and colors for print */
+      body { 
+        background: white !important; 
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        padding: 10mm !important;
+        margin: 0 !important;
+      }
+      
+      #app {
+        padding: 0 !important;
+      }
+      
+      /* Preserve colors */
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      
+      /* Ensure backgrounds print */
+      .bg-emerald-500, .bg-emerald-600, .bg-rose-500, .bg-amber-500,
+      .bg-blue-500, .bg-slate-800, .bg-slate-900,
+      .bg-emerald-100, .bg-rose-100, .bg-amber-100,
+      .bg-gradient-to-r, .bg-gradient-to-br {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      
+      /* Remove shadows and borders for cleaner print */
+      .shadow, .shadow-sm, .shadow-lg {
+        box-shadow: none !important;
+      }
+      
+      /* Ensure content fits on page */
+      .max-w-7xl {
+        max-width: 100% !important;
+      }
+      
+      /* Compact spacing for print */
+      .space-y-4 > * + * { margin-top: 0.5rem; }
+      .space-y-3 > * + * { margin-top: 0.375rem; }
+      .gap-4 { gap: 0.5rem; }
+      .gap-3 { gap: 0.375rem; }
+      .p-4 { padding: 0.5rem; }
+      .p-3 { padding: 0.375rem; }
+      .mb-4 { margin-bottom: 0.5rem; }
+      .mb-3 { margin-bottom: 0.375rem; }
+      .mt-4 { margin-top: 0.5rem; }
+      
+      /* Ensure charts print */
+      canvas {
+        max-width: 100% !important;
+        height: auto !important;
+      }
+      
+      /* Page break control */
+      .page-break-before { page-break-before: always; }
+      .page-break-after { page-break-after: always; }
+      .avoid-break { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen">
+  <div id="app" class="p-4"></div>
+
+<script>
+// ===================== CONFIGURATION =====================
+const STAGES = [
+  { id: 1, key: 'create', name: 'Create Memory', short: 'Create', icon: 'brain', abbr: 'CR', hex: '#10b981', formula: 'Consideration ÷ Awareness', type: 'Ratio', healthy: 50, warning: 30, metrics: ['awareness', 'consideration'], labels: { awareness: 'Awareness', consideration: 'Consideration' }, help: { awareness: '% who have heard of the brand', consideration: '% who would consider purchasing' }, diagnosis: "awareness isn't converting—people hear you but don't encode", questions: ['Do consumers know we exist?', 'Breaking through clutter?', 'Encoding among prospects?', 'Faster than benchmarks?', 'Creative distinctive enough?'], warnings: ['Ratio <30% (awareness without encoding)', 'High awareness, low consideration', 'Wasted reach'], interventions: ['Increase reach among non-aware', 'Emotionally distinctive creative', 'Clear category membership cues'] },
+  { id: 2, key: 'expand', name: 'Expand Memory', short: 'Expand', icon: 'trending-up', abbr: 'EX', hex: '#3b82f6', formula: '(Buzz + WOM) ÷ 2', type: 'Average', healthy: 40, warning: 25, metrics: ['buzz', 'womExposure'], labels: { buzz: 'Buzz', womExposure: 'WOM Exposure' }, help: { buzz: '% who heard something recently', womExposure: '% who discussed with friends/family' }, diagnosis: "narrow footprint—not enough people talking about you", questions: ['How many CEPs trigger us?', 'People hearing AND talking?', 'Diverse needs or one context?', 'What occasions could we own?', 'Part of cultural conversation?'], warnings: ['Average <40 (not in conversation)', 'High Buzz, low WOM (passive)', 'Single-occasion dependency'], interventions: ['Target new Category Entry Points', 'Occasion-specific messaging', 'Shareable, talkable creative'] },
+  { id: 3, key: 'strengthen', name: 'Strengthen Memory', short: 'Strengthen', icon: 'refresh-cw', abbr: 'ST', hex: '#8b5cf6', formula: '(Satisfaction + Recommendation) ÷ 2', type: 'Average', healthy: 65, warning: 50, metrics: ['satisfaction', 'recommendation'], labels: { satisfaction: 'Satisfaction', recommendation: 'Recommendation' }, help: { satisfaction: '% of current customers satisfied', recommendation: '% who would recommend' }, diagnosis: "customer memories weakening—satisfaction not driving advocacy", questions: ['Decaying or stable?', 'Media continuity sufficient?', 'Customers still positive?', 'Maintaining loyalty?', 'How fast do we decay off-air?'], warnings: ['Average <50% (active decay)', 'Declining trajectory', 'Sat > Rec gap'], interventions: ['Continuous media presence', 'Avoid dark periods >4 weeks', 'Loyalty-focused messaging'] },
+  { id: 4, key: 'retrieve', name: 'Retrieve Memory', short: 'Retrieve', icon: 'search', abbr: 'RT', hex: '#f59e0b', formula: 'Intent ÷ Consideration', type: 'Ratio', healthy: 60, warning: 40, metrics: ['purchaseIntent', 'consideration'], labels: { purchaseIntent: 'Purchase Intent', consideration: 'Consideration' }, help: { purchaseIntent: '% who intend to purchase', consideration: '% who would consider' }, diagnosis: "retrieval failure—consideration not converting to intent", questions: ['Come to mind when need arises?', 'Top-of-mind or buried?', 'Why know us but not buy?', 'Retrieval cues at purchase?', 'Awareness-action gap?'], warnings: ['Ratio <40% (retrieval failure)', 'High consideration, stagnant intent', 'Intent declining'], interventions: ['Increase recency of exposure', 'Point-of-sale triggers', 'Strengthen distinctive assets'] },
+  { id: 5, key: 'reinvigorate', name: 'Reinvigorate Memory', short: 'Reinvigorate', icon: 'rotate-ccw', abbr: 'RI', hex: '#f43f5e', formula: 'Former Customer %', type: 'Direct', healthy: 10, warning: 5, metrics: ['formerCustomer'], labels: { formerCustomer: 'Former Customer %' }, help: { formerCustomer: '% who are former customers of the brand' }, diagnosis: "low former customer base—limited reactivation pool", questions: ['Do we have a base of former customers to reactivate?', 'What triggers bring them back?', 'How long until forgotten?', 'Win-back connecting?', 'Losing faster than acquiring?'], warnings: ['<5% former customers (small pool)', 'Declining trajectory', 'Low campaign response'], interventions: ['Win-back with memory cues', 'Personalized retargeting', 'Reference past behavior'] },
+  { id: 6, key: 'disrupt', name: 'Disrupt Memory', short: 'Disrupt', icon: 'zap', abbr: 'DI', hex: '#64748b', formula: 'Brand Imp − Category Imp', type: 'Differential', healthy: 10, warning: 5, metrics: ['brandImpression', 'categoryImpression'], labels: { brandImpression: 'Brand Impression', categoryImpression: 'Category Impression' }, help: { brandImpression: '% with positive brand impression', categoryImpression: '% with positive impression of category average' }, diagnosis: "below category benchmark—not standing out", questions: ['Are we above category average?', 'Distinctive enough to stand out?', 'Why are customers switching?', 'Own unique attributes?', 'Winning or losing share of mind?'], warnings: ['Below category (negative differential)', 'Category gaining while flat', 'Parity with category'], interventions: ['Audit category positioning', 'Strengthen distinctiveness', 'Increase SOV to stand out'] }
+];
+
+const YOUGOV_COLS = ['Awareness', 'Buzz', 'Consideration', 'Former Customer', 'Impression', 'Purchase Intent', 'Recommend', 'Satisfaction', 'WOM Exposure'];
+const DEMO_DATA = { awareness: 72, consideration: 45, buzz: 28, womExposure: 22, satisfaction: 68, recommendation: 54, purchaseIntent: 32, formerCustomer: 8, brandImpression: 48, categoryImpression: 35 };
+
+// ===================== STATE =====================
+let state = {
+  view: 'import',
+  activeStage: 0,
+  compareMode: 'competitor',
+  tooltip: null,
+  showDashboardDropdown: false,
+  showCompareDropdown: false,
+  // Access control
+  accessRole: 'editor', // 'editor' or 'viewer'
+  viewerHiddenTabs: ['import', 'input'], // tabs hidden from viewers
+  isPreviewingAsViewer: false, // true when editor is previewing viewer mode
+  compareChartMode: 'absolute', // 'absolute' or 'benchmark'
+  config: { brandName: 'Sample Brand', category: 'QSR', period: 'Q1 2026', competitor: 'Competitor A' },
+  metrics: { ...DEMO_DATA },
+  compScores: { create: 58, expand: 42, strengthen: 65, retrieve: 55, reinvigorate: 12, disrupt: 8 },
+  catScores: { create: 50, expand: 35, strengthen: 60, retrieve: 50, reinvigorate: 10, disrupt: 0 },
+  // Import state
+  pasteText: '',
+  periodStartDate: '',
+  periodEndDate: '',
+  periodWeeks: null,
+  parsedTable: { headers: [], rows: [] },
+  brandRowIdx: 0,
+  competitorRowIdx: 1,
+  categoryRowIdx: 2,
+  importError: null,
+  // Previous period state
+  prevScores: { create: 55, expand: 22, strengthen: 58, retrieve: 65, reinvigorate: 6, disrupt: 10 },
+  prevPeriod: 'Q4 2025',
+  prevBrandName: 'Sample Brand',
+  showPrevImport: false,
+  prevPasteText: '',
+  prevStartDate: '',
+  prevEndDate: '',
+  prevParsedTable: { headers: [], rows: [] },
+  prevBrandRowIdx: 0,
+  prevImportError: null
+};
+
+let radarChart = null;
+let benchmarkRadarChart = null;
+let gapBarChart = null;
+let barChart = null;
+let competitorGapChart = null;
+let previousGapChart = null;
+
+// ===================== CALCULATIONS =====================
+function calcScores(m, catImp = 0) {
+  return {
+    create: m.awareness > 0 ? Math.min(100, Math.round((m.consideration / m.awareness) * 100)) : 0,
+    expand: Math.round((m.buzz + m.womExposure) / 2),
+    strengthen: Math.round((m.satisfaction + m.recommendation) / 2),
+    retrieve: m.consideration > 0 ? Math.min(100, Math.round((m.purchaseIntent / m.consideration) * 100)) : 0,
+    reinvigorate: Math.round(m.formerCustomer),
+    disrupt: Math.max(0, Math.round(m.brandImpression - catImp))
+  };
+}
+
+function getScores() { return calcScores(state.metrics, state.metrics.categoryImpression); }
+
+function getOverall() { 
+  const s = getScores();
+  const values = Object.values(s);
+  // If all scores are 0, return 0 (not 1)
+  if (values.every(v => v === 0)) return 0;
+  return Math.round(Math.pow(values.reduce((a, v) => a * Math.max(v, 1), 1), 1/6)); 
+}
+
+function getCalc(stage) {
+  const m = state.metrics;
+  switch(stage.key) {
+    case 'create': return `${m.consideration} ÷ ${m.awareness} × 100 = ${m.awareness > 0 ? Math.round((m.consideration/m.awareness)*100) : 0}`;
+    case 'expand': return `(${m.buzz} + ${m.womExposure}) ÷ 2 = ${Math.round((m.buzz + m.womExposure)/2)}`;
+    case 'strengthen': return `(${m.satisfaction} + ${m.recommendation}) ÷ 2 = ${Math.round((m.satisfaction + m.recommendation)/2)}`;
+    case 'retrieve': return `${m.purchaseIntent} ÷ ${m.consideration} × 100 = ${m.consideration > 0 ? Math.round((m.purchaseIntent/m.consideration)*100) : 0}`;
+    case 'reinvigorate': return `${m.formerCustomer}`;
+    case 'disrupt': return `${m.brandImpression} − ${m.categoryImpression} = ${Math.round(m.brandImpression - m.categoryImpression)}`;
+  }
+}
+
+function getStatus(score) {
+  if (score >= 60) return { label: 'Healthy', bg: 'bg-emerald-100 text-emerald-700', fill: '#10b981' };
+  if (score >= 40) return { label: 'Warning', bg: 'bg-amber-100 text-amber-700', fill: '#f59e0b' };
+  return { label: 'Critical', bg: 'bg-rose-100 text-rose-700', fill: '#f43f5e' };
+}
+
+function getColor(score) {
+  return score >= 60 ? 'text-emerald-600' : score >= 40 ? 'text-amber-500' : 'text-rose-500';
+}
+
+function getSummary() {
+  const scores = getScores();
+  const overall = getOverall();
+  const sorted = [...STAGES].sort((a, b) => scores[a.key] - scores[b.key]);
+  const weakest = sorted[0];
+  const strongest = sorted[sorted.length - 1];
+  return `${state.config.brandName}'s Memory Score is ${overall}/100. Strongest: ${strongest.name} (${scores[strongest.key]}). Priority: ${weakest.name} (${scores[weakest.key]}) — ${weakest.diagnosis}.`;
+}
+
+function getExecutiveSummary() {
+  const scores = getScores();
+  const overall = getOverall();
+  const sorted = [...STAGES].map(s => ({ ...s, score: scores[s.key] })).sort((a, b) => a.score - b.score);
+  const weakest = sorted.slice(0, 2);
+  const strongest = sorted.slice(-2).reverse();
+  
+  let assessment = '';
+  if (overall >= 60) {
+    assessment = `${state.config.brandName} demonstrates strong memory infrastructure with an overall score of ${overall}/100. `;
+  } else if (overall >= 40) {
+    assessment = `${state.config.brandName} shows moderate memory performance at ${overall}/100, with clear opportunities for improvement. `;
+  } else {
+    assessment = `${state.config.brandName} requires immediate attention with an overall score of ${overall}/100. `;
+  }
+  
+  assessment += `Priority areas: ${weakest.map(s => `${s.name} (${s.score})`).join(' and ')}. `;
+  assessment += `Strengths: ${strongest.map(s => `${s.name} (${s.score})`).join(' and ')}.`;
+  
+  return assessment;
+}
+
+function getStrategicRecommendation() {
+  const scores = getScores();
+  const sorted = [...STAGES].map(s => ({ ...s, score: scores[s.key] })).sort((a, b) => a.score - b.score);
+  const weakest = sorted[0];
+  
+  const recommendations = {
+    create: 'Increase media reach and frequency to build initial brand awareness. Focus on distinctive creative that encodes brand into memory.',
+    expand: 'Diversify messaging across multiple Category Entry Points. Create shareable content that drives word-of-mouth.',
+    strengthen: 'Maintain continuous media presence to prevent memory decay. Implement loyalty-focused touchpoints.',
+    retrieve: 'Strengthen point-of-sale triggers and distinctive brand assets. Increase recency of media exposure.',
+    reinvigorate: 'Deploy win-back campaigns targeting lapsed customers with personalized memory cues.',
+    disrupt: 'Differentiate from category through unique positioning. Increase Share of Voice to stand out from competitors.'
+  };
+  
+  return recommendations[weakest.key];
+}
+
+function getDecayInterpretation() {
+  const overall = getOverall();
+  // Match the Ebbinghaus formula used in the chart: R(t) = e^(-t/S) with S=4, floor=0.20
+  const S = 4;
+  const floor = 0.20;
+  const calcDecay = (weeks) => {
+    const retention = Math.exp(-weeks / S);
+    const adjustedRetention = floor + (1 - floor) * retention;
+    return Math.round(overall * adjustedRetention);
+  };
+  
+  const w4 = calcDecay(4);
+  const w8 = calcDecay(8);
+  const w16 = calcDecay(16);
+  const decayRate4 = Math.round(((overall - w4) / overall) * 100);
+  const decayRate16 = Math.round(((overall - w16) / overall) * 100);
+  
+  return `Starting at ${overall}, the brand's memory score is projected to decline to ${w4} by week 4 (−${decayRate4}%) and ${w16} by week 16 (−${decayRate16}%) without media support. Continuous investment is recommended to prevent retrieval failure at the point of purchase.`;
+}
+
+function getCompareInsights(scores, compData, compareMode) {
+  const gaps = STAGES.map(s => ({
+    ...s,
+    brandScore: scores[s.key],
+    compScore: compData[s.key] || 0,
+    gap: scores[s.key] - (compData[s.key] || 0)
+  }));
+  
+  const advantages = gaps.filter(g => g.gap > 5).sort((a, b) => b.gap - a.gap);
+  const vulnerabilities = gaps.filter(g => g.gap < -5).sort((a, b) => a.gap - b.gap);
+  const parity = gaps.filter(g => Math.abs(g.gap) <= 5);
+  
+  let insight = '';
+  
+  if (compareMode === 'competitor') {
+    if (advantages.length > 0) {
+      insight += `Competitive advantages in ${advantages.slice(0, 2).map(a => a.name).join(' and ')}. `;
+    }
+    if (vulnerabilities.length > 0) {
+      insight += `Vulnerabilities in ${vulnerabilities.slice(0, 2).map(v => v.name).join(' and ')} require defensive investment. `;
+    }
+    if (advantages.length === 0 && vulnerabilities.length === 0) {
+      insight += `Performance at parity with competitor across most dimensions. Focus on differentiation. `;
+    }
+  } else if (compareMode === 'category') {
+    if (advantages.length > 0) {
+      insight += `Outperforming category in ${advantages.slice(0, 2).map(a => a.name).join(' and ')}. `;
+    }
+    if (vulnerabilities.length > 0) {
+      insight += `Below category benchmark in ${vulnerabilities.slice(0, 2).map(v => v.name).join(' and ')}—priority investment areas. `;
+    }
+  } else if (compareMode === 'previous') {
+    const improved = gaps.filter(g => g.gap > 0).length;
+    const declined = gaps.filter(g => g.gap < 0).length;
+    
+    if (improved > declined) {
+      insight += `Positive momentum with ${improved} of 6 memory tasks improving. `;
+    } else if (declined > improved) {
+      insight += `Attention needed: ${declined} of 6 memory tasks have declined. `;
+    } else {
+      insight += `Mixed performance with equal gains and losses. `;
+    }
+    
+    if (vulnerabilities.length > 0) {
+      insight += `Significant decline in ${vulnerabilities[0].name} requires investigation.`;
+    }
+  }
+  
+  return insight;
+}
+
+function getCompareRecommendation(scores, compData, compareMode) {
+  const gaps = STAGES.map(s => ({
+    ...s,
+    gap: scores[s.key] - (compData[s.key] || 0)
+  }));
+  
+  const biggestGap = gaps.sort((a, b) => a.gap - b.gap)[0];
+  
+  if (compareMode === 'competitor' && biggestGap.gap < -10) {
+    return `Priority: Close the ${Math.abs(biggestGap.gap)}-point gap in ${biggestGap.name}. ${biggestGap.interventions[0]}`;
+  } else if (compareMode === 'category' && biggestGap.gap < -5) {
+    return `Priority: Reach category parity in ${biggestGap.name}. ${biggestGap.interventions[0]}`;
+  } else if (compareMode === 'previous' && biggestGap.gap < -5) {
+    return `Priority: Reverse decline in ${biggestGap.name} (${biggestGap.gap} pts). Investigate root cause and ${biggestGap.interventions[0].toLowerCase()}`;
+  }
+  
+  const biggestAdvantage = gaps.sort((a, b) => b.gap - a.gap)[0];
+  if (biggestAdvantage.gap > 10) {
+    return `Leverage: Protect ${biggestAdvantage.gap}-point advantage in ${biggestAdvantage.name} through continued investment.`;
+  }
+  
+  return `Maintain current trajectory while seeking differentiation opportunities.`;
+}
+
+// ===================== PARSING =====================
+function toMetrics(values) {
+  return {
+    awareness: values['Awareness'] || 0,
+    buzz: values['Buzz'] || 0,
+    consideration: values['Consideration'] || 0,
+    formerCustomer: values['Former Customer'] || 0,
+    brandImpression: values['Impression'] || 0,
+    purchaseIntent: values['Purchase Intent'] || 0,
+    recommendation: values['Recommend'] || 0,
+    satisfaction: values['Satisfaction'] || 0,
+    womExposure: values['WOM Exposure'] || 0
+  };
+}
+
+function parseTableGeneric(text) {
+  if (!text.trim()) return { headers: [], rows: [], error: null };
+  try {
+    const lines = text.split(/\r?\n/).filter(l => l.trim());
+    const hdrIdx = lines.findIndex(l => l.toLowerCase().includes('awareness'));
+    if (hdrIdx === -1) return { headers: [], rows: [], error: 'No header row found (must contain "Awareness")' };
+    
+    const hdrParts = lines[hdrIdx].split('\t').map(h => h.trim());
+    
+    // Build column map: column name -> index in header
+    const colMap = {};
+    YOUGOV_COLS.forEach(col => {
+      const idx = hdrParts.findIndex(h => h.toLowerCase() === col.toLowerCase());
+      if (idx >= 0) colMap[col] = idx;
+    });
+    
+    // Check for missing required columns and provide specific feedback
+    const foundCols = Object.keys(colMap);
+    const missingCols = YOUGOV_COLS.filter(col => !foundCols.includes(col));
+    
+    if (missingCols.length > 0) {
+      return { 
+        headers: [], 
+        rows: [], 
+        error: `Missing required fields: ${missingCols.join(', ')}. All 9 YouGov metrics are required for Memory Score™ calculation.`,
+        missingFields: missingCols
+      };
+    }
+    
+    // Find the index of first actual metric header (first non-empty cell that's not "Name")
+    // This helps align data when users paste with inconsistent leading whitespace
+    const firstActualMetricIdx = hdrParts.findIndex(h => 
+      h && h.trim() && 
+      h.toLowerCase() !== 'name' && 
+      !h.match(/^\s*$/)
+    );
+    
+    const dataRows = [];
+    for (let i = hdrIdx + 1; i < lines.length; i++) {
+      const parts = lines[i].split('\t').map(p => p.trim());
+      
+      // Skip sub-header rows (multiple "Score" values)
+      if (parts.filter(p => p.toLowerCase() === 'score').length > 3) continue;
+      
+      // Find name and first numeric position in this row
+      let name = '';
+      let firstNumIdx = -1;
+      for (let j = 0; j < parts.length; j++) {
+        const v = parts[j];
+        const isNum = v && !isNaN(parseFloat(v));
+        if (isNum && firstNumIdx < 0) {
+          firstNumIdx = j;
+          break;
+        }
+        if (v && !isNum && v.toLowerCase() !== 'score') {
+          name = v;
+        }
+      }
+      if (!name || firstNumIdx < 0) continue;
+      
+      // Calculate offset to handle misaligned columns from inconsistent paste formatting
+      // Offset = where numbers start in data - where metrics start in header
+      const offset = firstNumIdx - firstActualMetricIdx;
+      
+      const values = {};
+      Object.entries(colMap).forEach(([col, hdrColIdx]) => {
+        const dataColIdx = hdrColIdx + offset;
+        if (dataColIdx >= 0 && dataColIdx < parts.length) {
+          const num = parseFloat(parts[dataColIdx]);
+          if (!isNaN(num)) values[col] = Math.round(num * 10) / 10;
+        }
+      });
+      
+      if (Object.keys(values).length >= 5) dataRows.push({ name, values });
+    }
+    
+    if (dataRows.length === 0) return { headers: [], rows: [], error: 'No valid data rows found' };
+    return { headers: YOUGOV_COLS.filter(c => colMap[c] !== undefined), rows: dataRows, error: null };
+  } catch (e) {
+    return { headers: [], rows: [], error: 'Parse error: ' + e.message };
+  }
+}
+
+function handlePeriodChange(startDate, endDate) {
+  state.periodStartDate = startDate;
+  state.periodEndDate = endDate;
+  
+  if (startDate && endDate) {
+    const d1 = new Date(startDate);
+    const d2 = new Date(endDate);
+    if (!isNaN(d1) && !isNaN(d2) && d2 >= d1) {
+      state.periodWeeks = Math.round(Math.abs(d2 - d1) / (7 * 24 * 60 * 60 * 1000));
+      return;
+    }
+  }
+  state.periodWeeks = null;
+}
+
+function formatPeriodLabel(startDate, endDate) {
+  if (!startDate || !endDate) return '';
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const d1 = new Date(startDate);
+  const d2 = new Date(endDate);
+  if (isNaN(d1) || isNaN(d2)) return '';
+  return `${months[d1.getMonth()]} ${d1.getFullYear()} - ${months[d2.getMonth()]} ${d2.getFullYear()}`;
+}
+
+function formatDateRange(startDate, endDate) {
+  if (!startDate || !endDate) return '';
+  return `${startDate} to ${endDate}`;
+}
+
+function applyImportData() {
+  if (state.parsedTable.rows.length === 0) return;
+  
+  // Validate period dates are filled
+  if (!state.periodStartDate || !state.periodEndDate) {
+    state.importError = 'Please select a period date range before continuing.';
+    render();
+    return;
+  }
+  
+  const brandRow = state.parsedTable.rows[state.brandRowIdx];
+  const compRow = state.competitorRowIdx >= 0 ? state.parsedTable.rows[state.competitorRowIdx] : null;
+  const catRow = state.categoryRowIdx >= 0 ? state.parsedTable.rows[state.categoryRowIdx] : null;
+  
+  const brandMetrics = toMetrics(brandRow.values);
+  const catImp = catRow ? (catRow.values['Impression'] || 0) : 0;
+  
+  state.metrics = { ...brandMetrics, categoryImpression: catImp };
+  state.config.brandName = brandRow.name;
+  if (compRow) state.config.competitor = compRow.name;
+  if (catRow) state.config.category = catRow.name;
+  
+  // Auto-generate period label from dates
+  const periodLabel = formatPeriodLabel(state.periodStartDate, state.periodEndDate);
+  if (periodLabel) state.config.period = periodLabel;
+  
+  if (compRow) state.compScores = calcScores(toMetrics(compRow.values), catImp);
+  if (catRow) {
+    const catM = toMetrics(catRow.values);
+    state.catScores = calcScores(catM, catM.brandImpression);
+  }
+  
+  state.pasteText = '';
+  state.periodStartDate = '';
+  state.periodEndDate = '';
+  state.periodWeeks = null;
+  state.parsedTable = { headers: [], rows: [] };
+  state.importError = null;
+  state.view = 'dashboard';
+  render();
+}
+
+function applyPrevImport() {
+  if (state.prevParsedTable.rows.length === 0) return;
+  const brandRow = state.prevParsedTable.rows[state.prevBrandRowIdx];
+  const prevM = toMetrics(brandRow.values);
+  state.prevScores = calcScores(prevM, state.metrics.categoryImpression || 0);
+  // Auto-generate period label from dates
+  state.prevPeriod = formatPeriodLabel(state.prevStartDate, state.prevEndDate) || 'Previous';
+  state.prevBrandName = brandRow.name;
+  state.prevPasteText = '';
+  state.prevStartDate = '';
+  state.prevEndDate = '';
+  state.prevParsedTable = { headers: [], rows: [] };
+  state.showPrevImport = false;
+  render();
+}
+
+function clearImport() {
+  state.pasteText = '';
+  state.periodStartDate = '';
+  state.periodEndDate = '';
+  state.periodWeeks = null;
+  state.parsedTable = { headers: [], rows: [] };
+  state.importError = null;
+  state.config = { brandName: '', category: '', period: '', competitor: '' };
+  state.metrics = { awareness: 0, consideration: 0, buzz: 0, womExposure: 0, satisfaction: 0, recommendation: 0, purchaseIntent: 0, formerCustomer: 0, brandImpression: 0, categoryImpression: 0 };
+  state.compScores = { create: 0, expand: 0, strengthen: 0, retrieve: 0, reinvigorate: 0, disrupt: 0 };
+  state.catScores = { create: 0, expand: 0, strengthen: 0, retrieve: 0, reinvigorate: 0, disrupt: 0 };
+  state.prevScores = null;
+  state.prevPeriod = '';
+  state.prevBrandName = '';
+  state.prevPasteText = '';
+  state.prevStartDate = '';
+  state.prevEndDate = '';
+  state.prevParsedTable = { headers: [], rows: [] };
+  state.prevImportError = null;
+  state.showPrevImport = false;
+  render();
+}
+
+function clearPrevImport() {
+  state.prevScores = null;
+  state.prevPeriod = '';
+  state.prevBrandName = '';
+  state.prevPasteText = '';
+  state.prevStartDate = '';
+  state.prevEndDate = '';
+  state.prevParsedTable = { headers: [], rows: [] };
+  state.prevImportError = null;
+  render();
+}
+
+function resetDemo() {
+  if (!isEditor()) return;
+  state.config = { brandName: 'Sample Brand', category: 'QSR', period: 'Q1 2026', competitor: 'Competitor A' };
+  state.metrics = { ...DEMO_DATA };
+  state.compScores = { create: 58, expand: 42, strengthen: 65, retrieve: 55, reinvigorate: 12, disrupt: 8 };
+  state.catScores = { create: 50, expand: 35, strengthen: 60, retrieve: 50, reinvigorate: 10, disrupt: 0 };
+  render();
+}
+
+function clearAll() {
+  if (!isEditor()) return;
+  state.config = { brandName: '', category: '', period: '', competitor: '' };
+  state.metrics = { awareness: 0, consideration: 0, buzz: 0, womExposure: 0, satisfaction: 0, recommendation: 0, purchaseIntent: 0, formerCustomer: 0, brandImpression: 0, categoryImpression: 0 };
+  // Reset comparison scores
+  state.compScores = { create: 0, expand: 0, strengthen: 0, retrieve: 0, reinvigorate: 0, disrupt: 0 };
+  state.catScores = { create: 0, expand: 0, strengthen: 0, retrieve: 0, reinvigorate: 0, disrupt: 0 };
+  // Reset previous period data
+  state.prevScores = null;
+  state.prevPeriod = '';
+  state.prevBrandName = '';
+  state.showPrevImport = false;
+  state.prevPasteText = '';
+  state.prevStartDate = '';
+  state.prevEndDate = '';
+  state.prevParsedTable = { headers: [], rows: [] };
+  state.prevBrandRowIdx = 0;
+  state.prevImportError = null;
+  // Reset import state
+  state.pasteText = '';
+  state.periodStartDate = '';
+  state.periodEndDate = '';
+  state.periodWeeks = null;
+  state.parsedTable = { headers: [], rows: [] };
+  state.brandRowIdx = 0;
+  state.competitorRowIdx = 1;
+  state.categoryRowIdx = 2;
+  state.importError = null;
+  render();
+}
+
+// ===================== ICONS =====================
+function icon(name, className = 'w-4 h-4') {
+  return `<i data-lucide="${name}" class="${className}"></i>`;
+}
+
+function initIcons() {
+  if (typeof lucide !== 'undefined' && lucide.createIcons) {
+    lucide.createIcons();
+  } else {
+    // Retry after a short delay if lucide isn't loaded yet
+    setTimeout(() => {
+      if (typeof lucide !== 'undefined' && lucide.createIcons) {
+        lucide.createIcons();
+      }
+    }, 100);
+  }
+}
+
+// ===================== CHARTS =====================
+function renderRadarChart() {
+  const canvas = document.getElementById('radarChart');
+  if (!canvas) return;
+  
+  const scores = getScores();
+  const compData = state.compareMode === 'competitor' ? state.compScores : 
+                   state.compareMode === 'category' ? state.catScores : 
+                   state.prevScores || { create: 0, expand: 0, strengthen: 0, retrieve: 0, reinvigorate: 0, disrupt: 0 };
+  
+  const compLabel = state.compareMode === 'competitor' ? state.config.competitor :
+                    state.compareMode === 'category' ? state.config.category :
+                    state.prevPeriod || 'Previous';
+  
+  const brandLabel = state.compareMode === 'previous' ? (state.config.period || 'Current') : state.config.brandName;
+  
+  // Calculate % of comparison (Brand / Comparison * 100)
+  const calcPct = (brand, comp) => {
+    if (comp === 0) return 0;
+    return Math.round((brand / comp) * 100);
+  };
+  
+  const brandPcts = STAGES.map(s => calcPct(scores[s.key], compData[s.key]));
+  const maxVal = Math.max(150, ...brandPcts);
+  const roundedMax = Math.ceil(maxVal / 50) * 50;
+  
+  if (radarChart) radarChart.destroy();
+  
+  radarChart = new Chart(canvas, {
+    type: 'radar',
+    data: {
+      labels: STAGES.map(s => s.short),
+      datasets: [
+        {
+          label: brandLabel + ' (% of ' + compLabel + ')',
+          data: brandPcts,
+          backgroundColor: 'rgba(5, 150, 105, 0.4)',
+          borderColor: '#059669',
+          borderWidth: 2.5,
+          pointBackgroundColor: '#059669',
+          pointRadius: 4
+        },
+        {
+          label: compLabel + ' (baseline)',
+          data: STAGES.map(() => 100),
+          backgroundColor: 'rgba(0, 0, 0, 0)',
+          borderColor: state.compareMode === 'previous' ? '#f59e0b' : '#f43f5e',
+          borderWidth: 1.5,
+          borderDash: [6, 3],
+          pointRadius: 0
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        r: {
+          beginAtZero: true,
+          max: roundedMax,
+          ticks: { 
+            stepSize: 50, 
+            font: { size: 9 },
+            callback: function(val) { return val + '%'; },
+            showLabelBackdrop: false
+          },
+          pointLabels: { font: { size: 12, weight: 'bold' }, color: STAGES.map(s => s.hex) }
+        }
+      },
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 10 }, usePointStyle: true, pointStyle: 'circle' } },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              if (ctx.dataset.borderDash) return compLabel + ' (baseline): 100%';
+              const stage = STAGES[ctx.dataIndex];
+              const brand = scores[stage.key];
+              const comp = compData[stage.key];
+              return brandLabel + ': ' + brand + ' vs ' + compLabel + ': ' + comp + ' (' + ctx.raw + '%)';
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+// Relative performance radar: normalizes each stage to % of category score
+function renderBenchmarkRadarChart() {
+  const canvas = document.getElementById('benchmarkRadarChart');
+  if (!canvas) return;
+
+  const scores = getScores();
+  const compData = state.compareMode === 'competitor' ? state.compScores :
+                   state.compareMode === 'category' ? state.catScores :
+                   state.prevScores || { create: 0, expand: 0, strengthen: 0, retrieve: 0, reinvigorate: 0, disrupt: 0 };
+
+  const compLabel = state.compareMode === 'competitor' ? state.config.competitor :
+                    state.compareMode === 'category' ? state.config.category :
+                    state.prevPeriod || 'Previous';
+  const brandLabel = state.compareMode === 'previous' ? (state.config.period || 'Current') : state.config.brandName;
+  const catLabel = state.config.category || 'Category';
+
+  const normalize = (score, stageKey) => {
+    // Special handling for Disrupt: use raw impressions
+    if (stageKey === 'disrupt') {
+      const brandImp = state.metrics.brandImpression;
+      const catImp = state.metrics.categoryImpression;
+      if (catImp === 0) return 0;
+      return Math.round((brandImp / catImp) * 100);
+    }
+    const catScore = state.catScores[stageKey];
+    if (catScore === 0) return 0;
+    return Math.round((score / catScore) * 100);
+  };
+
+  const datasets = [
+    {
+      label: brandLabel + ' (% of ' + catLabel + ')',
+      data: STAGES.map(s => normalize(scores[s.key], s.key)),
+      backgroundColor: 'rgba(5, 150, 105, 0.25)',
+      borderColor: '#059669',
+      borderWidth: 2.5,
+      pointBackgroundColor: '#059669',
+      pointRadius: 4
+    },
+    {
+      label: catLabel + ' (baseline)',
+      data: STAGES.map(() => 100),
+      backgroundColor: 'rgba(0, 0, 0, 0)',
+      borderColor: '#3b82f6',
+      borderWidth: 1.5,
+      borderDash: [6, 3],
+      pointRadius: 0,
+      pointHitRadius: 0
+    }
+  ];
+
+  // Add competitor if not in category mode (would be redundant)
+  if (state.compareMode !== 'category') {
+    datasets.splice(1, 0, {
+      label: compLabel + ' (% of ' + catLabel + ')',
+      data: STAGES.map(s => normalize(compData[s.key], s.key)),
+      backgroundColor: state.compareMode === 'previous' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(244, 63, 94, 0.15)',
+      borderColor: state.compareMode === 'previous' ? '#f59e0b' : '#f43f5e',
+      borderWidth: 2,
+      pointBackgroundColor: state.compareMode === 'previous' ? '#f59e0b' : '#f43f5e',
+      pointRadius: 3
+    });
+  }
+
+  const allVals = datasets.filter(d => d.pointRadius !== 0).flatMap(d => d.data);
+  const maxVal = Math.max(150, ...allVals);
+  const roundedMax = Math.ceil(maxVal / 50) * 50; // Round up to nearest 50
+
+  if (benchmarkRadarChart) benchmarkRadarChart.destroy();
+
+  benchmarkRadarChart = new Chart(canvas, {
+    type: 'radar',
+    data: {
+      labels: STAGES.map(s => s.short),
+      datasets: datasets
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        r: {
+          beginAtZero: true,
+          max: roundedMax,
+          ticks: {
+            stepSize: 50,
+            font: { size: 9 },
+            callback: function(val) { return val + '%'; },
+            showLabelBackdrop: false
+          },
+          pointLabels: { font: { size: 12, weight: 'bold' }, color: STAGES.map(s => s.hex) }
+        }
+      },
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 10 }, usePointStyle: true, pointStyle: 'circle' } },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              const stage = STAGES[ctx.dataIndex];
+              const catScore = state.catScores[stage.key];
+              if (ctx.dataset.borderDash) return catLabel + ': ' + catScore + ' (100%)';
+              const raw = ctx.datasetIndex === 0 ? scores[stage.key] : compData[stage.key];
+              return ctx.dataset.label.split(' (')[0] + ': ' + raw + ' (' + ctx.raw + '% of ' + catLabel + ' ' + catScore + ')';
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+// Gap bar chart: % deviation from category per stage
+function renderGapBarChart() {
+  const canvas = document.getElementById('gapBarChart');
+  if (!canvas) return;
+
+  const scores = getScores();
+  const compData = state.compareMode === 'competitor' ? state.compScores :
+                   state.compareMode === 'category' ? state.catScores :
+                   state.prevScores || { create: 0, expand: 0, strengthen: 0, retrieve: 0, reinvigorate: 0, disrupt: 0 };
+
+  const compLabel = state.compareMode === 'competitor' ? state.config.competitor :
+                    state.compareMode === 'category' ? state.config.category :
+                    state.prevPeriod || 'Previous';
+  const brandLabel = state.compareMode === 'previous' ? (state.config.period || 'Current') : state.config.brandName;
+  const catLabel = state.config.category || 'Category';
+
+  const pctGap = (score, stageKey) => {
+    // Special handling for Disrupt: use raw impressions
+    if (stageKey === 'disrupt') {
+      const brandImp = state.metrics.brandImpression;
+      const catImp = state.metrics.categoryImpression;
+      if (catImp === 0) return 0;
+      return Math.round(((brandImp - catImp) / catImp) * 100);
+    }
+    const cat = state.catScores[stageKey];
+    if (cat === 0) return 0;
+    return Math.round(((score - cat) / cat) * 100);
+  };
+
+  const datasets = [
+    {
+      label: brandLabel,
+      data: STAGES.map(s => pctGap(scores[s.key], s.key)),
+      backgroundColor: STAGES.map(s => {
+        const g = pctGap(scores[s.key], s.key);
+        return g >= 0 ? 'rgba(5, 150, 105, 0.7)' : 'rgba(244, 63, 94, 0.7)';
+      }),
+      borderColor: STAGES.map(s => {
+        const g = pctGap(scores[s.key], s.key);
+        return g >= 0 ? '#059669' : '#f43f5e';
+      }),
+      borderWidth: 1,
+      borderRadius: 4
+    }
+  ];
+
+  // Add competitor if not in category mode
+  if (state.compareMode !== 'category') {
+    datasets.push({
+      label: compLabel,
+      data: STAGES.map(s => pctGap(compData[s.key], s.key)),
+      backgroundColor: state.compareMode === 'previous' ? 'rgba(245, 158, 11, 0.5)' : 'rgba(100, 116, 139, 0.4)',
+      borderColor: state.compareMode === 'previous' ? '#f59e0b' : '#64748b',
+      borderWidth: 1,
+      borderRadius: 4
+    });
+  }
+
+  if (gapBarChart) gapBarChart.destroy();
+
+  gapBarChart = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: STAGES.map(s => s.short),
+      datasets: datasets
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      indexAxis: 'y',
+      scales: {
+        x: {
+          grid: {
+            color: function(ctx) { return ctx.tick && ctx.tick.value === 0 ? '#334155' : '#e2e8f0'; },
+            lineWidth: function(ctx) { return ctx.tick && ctx.tick.value === 0 ? 2 : 1; }
+          },
+          ticks: {
+            font: { size: 10 },
+            callback: function(val) { return (val > 0 ? '+' : '') + val + '%'; }
+          },
+          title: { display: true, text: '% Change from ' + catLabel, font: { size: 10, weight: 'bold' }, color: '#64748b' }
+        },
+        y: {
+          ticks: {
+            font: { size: 11, weight: 'bold' },
+            color: STAGES.map(s => s.hex),
+            autoSkip: false
+          }
+        }
+      },
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 10 }, usePointStyle: true, pointStyle: 'rectRounded' } },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              const stage = STAGES[ctx.dataIndex];
+              const catScore = state.catScores[stage.key];
+              const isComp = ctx.datasetIndex === 1;
+              const raw = isComp ? compData[stage.key] : scores[stage.key];
+              const pct = ctx.raw;
+              return ctx.dataset.label + ': ' + raw + ' (' + catLabel + ': ' + catScore + ', gap: ' + (pct > 0 ? '+' : '') + pct + '%)';
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+// Competitor gap bar chart: shows Brand vs Competitor gap %
+function renderCompetitorGapChart() {
+  const canvas = document.getElementById('competitorGapChart');
+  if (!canvas) return;
+
+  const scores = getScores();
+  const compData = state.compScores;
+
+  const gapPct = (brand, comp) => {
+    if (comp === 0) return 0;
+    return Math.round(((brand - comp) / comp) * 100);
+  };
+
+  const gaps = STAGES.map(s => gapPct(scores[s.key], compData[s.key]));
+
+  if (competitorGapChart) competitorGapChart.destroy();
+
+  competitorGapChart = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: STAGES.map(s => s.short),
+      datasets: [{
+        label: '% Change vs ' + state.config.competitor,
+        data: gaps,
+        backgroundColor: gaps.map(g => g >= 0 ? 'rgba(5, 150, 105, 0.7)' : 'rgba(244, 63, 94, 0.7)'),
+        borderColor: gaps.map(g => g >= 0 ? '#059669' : '#f43f5e'),
+        borderWidth: 1,
+        borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      indexAxis: 'y',
+      scales: {
+        x: {
+          grid: {
+            color: function(ctx) { return ctx.tick && ctx.tick.value === 0 ? '#334155' : '#e2e8f0'; },
+            lineWidth: function(ctx) { return ctx.tick && ctx.tick.value === 0 ? 2 : 1; }
+          },
+          ticks: {
+            font: { size: 10 },
+            callback: function(val) { return (val > 0 ? '+' : '') + val + '%'; }
+          },
+          title: { display: true, text: '% Change vs Competitor', font: { size: 10, weight: 'bold' }, color: '#64748b' }
+        },
+        y: {
+          ticks: {
+            font: { size: 11, weight: 'bold' },
+            color: STAGES.map(s => s.hex),
+            autoSkip: false
+          }
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              const stage = STAGES[ctx.dataIndex];
+              const brand = scores[stage.key];
+              const comp = compData[stage.key];
+              const pct = ctx.raw;
+              return state.config.brandName + ': ' + brand + ' vs ' + state.config.competitor + ': ' + comp + ' (' + (pct > 0 ? '+' : '') + pct + '%)';
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+// Previous period gap bar chart: shows % change from previous period
+function renderPreviousGapChart() {
+  const canvas = document.getElementById('previousGapChart');
+  if (!canvas) return;
+
+  const scores = getScores();
+  const prevData = state.prevScores || {};
+
+  const pctChange = (current, prev) => {
+    if (prev === 0) return 0;
+    return Math.round(((current - prev) / prev) * 100);
+  };
+
+  const changes = STAGES.map(s => pctChange(scores[s.key], prevData[s.key] || 0));
+
+  if (previousGapChart) previousGapChart.destroy();
+
+  previousGapChart = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: STAGES.map(s => s.short),
+      datasets: [{
+        label: '% Change vs ' + (state.prevPeriod || 'Previous'),
+        data: changes,
+        backgroundColor: changes.map(c => c >= 0 ? 'rgba(5, 150, 105, 0.7)' : 'rgba(244, 63, 94, 0.7)'),
+        borderColor: changes.map(c => c >= 0 ? '#059669' : '#f43f5e'),
+        borderWidth: 1,
+        borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      indexAxis: 'y',
+      scales: {
+        x: {
+          grid: {
+            color: function(ctx) { return ctx.tick && ctx.tick.value === 0 ? '#334155' : '#e2e8f0'; },
+            lineWidth: function(ctx) { return ctx.tick && ctx.tick.value === 0 ? 2 : 1; }
+          },
+          ticks: {
+            font: { size: 10 },
+            callback: function(val) { return (val > 0 ? '+' : '') + val + '%'; }
+          },
+          title: { display: true, text: '% Change vs Previous Period', font: { size: 10, weight: 'bold' }, color: '#64748b' }
+        },
+        y: {
+          ticks: {
+            font: { size: 11, weight: 'bold' },
+            color: STAGES.map(s => s.hex),
+            autoSkip: false
+          }
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              const stage = STAGES[ctx.dataIndex];
+              const current = scores[stage.key];
+              const prev = prevData[stage.key] || 0;
+              const pct = ctx.raw;
+              return (state.config.period || 'Current') + ': ' + current + ' vs ' + (state.prevPeriod || 'Previous') + ': ' + prev + ' (' + (pct > 0 ? '+' : '') + pct + '%)';
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+function renderBarChart() {
+  const canvas = document.getElementById('decayChart');
+  if (!canvas) return;
+  
+  const overall = getOverall();
+  const status = getStatus(overall);
+  
+  // Generate more data points for a smooth curve (every week from 0-16)
+  const weeks = Array.from({ length: 17 }, (_, i) => i);
+  
+  // Ebbinghaus forgetting curve: R(t) = e^(-t/S)
+  const S = 4; // stability constant (weeks) - how quickly memory decays
+  const floor = 0.20; // minimum retention - brands don't fully disappear from memory
+  const data = weeks.map(w => {
+    const retention = Math.exp(-w / S); // Ebbinghaus curve: rapid initial decay, slowing over time
+    const adjustedRetention = floor + (1 - floor) * retention; // apply floor to prevent decay to zero
+    return Math.round(overall * adjustedRetention);
+  });
+  
+  // Dynamic y-axis calculation for better curve visibility
+  const yMax = Math.ceil(overall / 10) * 10 + 10; // round up to nearest 10 + padding
+  const yMin = Math.max(0, Math.floor((overall * floor) / 5) * 5 - 5); // floor value - padding, min 0
+  
+  if (barChart) barChart.destroy();
+  
+  barChart = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels: weeks.map(w => w === 0 ? 'Now' : `W${w}`),
+      datasets: [{
+        data: data,
+        borderColor: status.fill.replace('0.6', '1'),
+        borderWidth: 2.5,
+        fill: false,
+        tension: 0.4, // smooth curve
+        pointRadius: weeks.map(w => [0, 4, 8, 12, 16].includes(w) ? 5 : 0), // only show key points
+        pointBackgroundColor: '#fff',
+        pointBorderColor: status.fill.replace('0.6', '1'),
+        pointBorderWidth: 2.5,
+        pointHoverRadius: 7
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { 
+          callbacks: { 
+            title: (ctx) => `Week ${ctx[0].label === 'Now' ? '0' : ctx[0].label.replace('W', '')}`,
+            label: (ctx) => `Memory Score: ${ctx.raw}` 
+          }
+        }
+      },
+      scales: {
+        y: { 
+          min: yMin,
+          max: yMax,
+          ticks: { font: { size: 10 } },
+          grid: { color: 'rgba(0,0,0,0.05)' }
+        },
+        x: { 
+          ticks: { 
+            font: { size: 10 },
+            maxTicksLimit: 9,
+            callback: function(value, index) {
+              return [0, 4, 8, 12, 16].includes(index) ? this.getLabelForValue(value) : '';
+            }
+          },
+          grid: { display: false }
+        }
+      }
+    }
+  });
+}
+
+
+// ===================== UTILITY FUNCTIONS =====================
+function getDateString() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function getBrandSlug() {
+  return (state.config.brandName || 'Brand').replace(/[^a-zA-Z0-9]/g, '_');
+}
+
+// ===================== PNG EXPORT UTILITIES =====================
+function getExportContext() {
+  const brandLabel = state.compareMode === 'previous' ? (state.config.period || 'Current') : state.config.brandName;
+  const compLabel = state.compareMode === 'competitor' ? state.config.competitor :
+                    state.compareMode === 'category' ? (state.config.category || 'Category') :
+                    state.prevPeriod || 'Previous';
+  const modeLabel = state.compareMode === 'competitor' ? 'vs Competitor' :
+                    state.compareMode === 'category' ? 'vs Category' : 'vs Previous Period';
+  return { brandLabel, compLabel, modeLabel };
+}
+
+function buildExportCanvas(chartCanvas, title, subtitle, extraInfo) {
+  const dpr = 2; // high-res export
+  const padX = 48 * dpr;
+  const padTop = 120 * dpr;
+  const padBot = 70 * dpr;
+  const chartW = chartCanvas.width * dpr;
+  const chartH = chartCanvas.height * dpr;
+  const totalW = chartW + padX * 2;
+  const totalH = chartH + padTop + padBot;
+
+  const c = document.createElement('canvas');
+  c.width = totalW;
+  c.height = totalH;
+  const ctx = c.getContext('2d');
+
+  // Background
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, totalW, totalH);
+
+  // Top accent bar
+  const grad = ctx.createLinearGradient(0, 0, totalW, 0);
+  grad.addColorStop(0, '#10b981');
+  grad.addColorStop(1, '#059669');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, totalW, 6 * dpr);
+
+  // Title
+  ctx.fillStyle = '#1e293b';
+  ctx.font = `bold ${18 * dpr}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+  ctx.fillText(title, padX, 40 * dpr);
+
+  // Subtitle
+  ctx.fillStyle = '#64748b';
+  ctx.font = `${12 * dpr}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+  ctx.fillText(subtitle, padX, 62 * dpr);
+
+  // Extra info line
+  if (extraInfo) {
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = `${10 * dpr}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+    ctx.fillText(extraInfo, padX, 82 * dpr);
+  }
+
+  // Separator
+  ctx.strokeStyle = '#e2e8f0';
+  ctx.lineWidth = 1 * dpr;
+  ctx.beginPath();
+  ctx.moveTo(padX, 96 * dpr);
+  ctx.lineTo(totalW - padX, 96 * dpr);
+  ctx.stroke();
+
+  // Chart image
+  ctx.drawImage(chartCanvas, padX, padTop, chartW, chartH);
+
+  // Footer separator
+  const footerY = padTop + chartH + 16 * dpr;
+  ctx.strokeStyle = '#e2e8f0';
+  ctx.beginPath();
+  ctx.moveTo(padX, footerY);
+  ctx.lineTo(totalW - padX, footerY);
+  ctx.stroke();
+
+  // Footer text
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = `${9 * dpr}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+  ctx.fillText('Source: YouGov BrandIndex | Memory Score\u2122 | Omnicom Media Canada', padX, footerY + 20 * dpr);
+
+  const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  const dateWidth = ctx.measureText('Generated: ' + dateStr).width;
+  ctx.fillText('Generated: ' + dateStr, totalW - padX - dateWidth, footerY + 20 * dpr);
+
+  return c;
+}
+
+function buildTableExportCanvas(tableEl, title, subtitle, extraInfo) {
+  // Use html2canvas for table elements
+  return new Promise((resolve) => {
+    // Create a wrapper div with styling for export
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'position:absolute;left:-9999px;top:0;background:#fff;padding:48px;min-width:700px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;';
+    
+    // Title block
+    const header = document.createElement('div');
+    header.style.cssText = 'margin-bottom:24px;border-bottom:2px solid #e2e8f0;padding-bottom:16px;';
+    
+    // Accent bar
+    const accent = document.createElement('div');
+    accent.style.cssText = 'height:4px;background:linear-gradient(to right,#10b981,#059669);border-radius:2px;margin-bottom:16px;';
+    header.appendChild(accent);
+    
+    const h1 = document.createElement('div');
+    h1.style.cssText = 'font-size:20px;font-weight:700;color:#1e293b;margin-bottom:4px;';
+    h1.textContent = title;
+    header.appendChild(h1);
+    
+    const sub = document.createElement('div');
+    sub.style.cssText = 'font-size:13px;color:#64748b;margin-bottom:2px;';
+    sub.textContent = subtitle;
+    header.appendChild(sub);
+    
+    if (extraInfo) {
+      const info = document.createElement('div');
+      info.style.cssText = 'font-size:11px;color:#94a3b8;';
+      info.textContent = extraInfo;
+      header.appendChild(info);
+    }
+    
+    wrapper.appendChild(header);
+    
+    // Clone the table
+    const tableClone = tableEl.cloneNode(true);
+    tableClone.style.cssText = 'width:100%;border-collapse:collapse;font-size:13px;';
+    // Style table cells
+    tableClone.querySelectorAll('th').forEach(th => {
+      th.style.cssText += ';padding:10px 16px;border-bottom:2px solid #e2e8f0;text-align:center;font-weight:600;color:#475569;';
+      if (th.classList.contains('text-left')) th.style.textAlign = 'left';
+    });
+    tableClone.querySelectorAll('td').forEach(td => {
+      td.style.cssText += ';padding:10px 16px;border-bottom:1px solid #f1f5f9;';
+    });
+    wrapper.appendChild(tableClone);
+    
+    // Footer
+    const footer = document.createElement('div');
+    footer.style.cssText = 'margin-top:20px;padding-top:12px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;';
+    const footLeft = document.createElement('span');
+    footLeft.textContent = 'Source: YouGov BrandIndex | Memory Score\u2122 | Omnicom Media Canada';
+    const footRight = document.createElement('span');
+    footRight.textContent = 'Generated: ' + new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    footer.appendChild(footLeft);
+    footer.appendChild(footRight);
+    wrapper.appendChild(footer);
+    
+    document.body.appendChild(wrapper);
+    
+    html2canvas(wrapper, { scale: 2, backgroundColor: '#ffffff', useCORS: true }).then(canvas => {
+      document.body.removeChild(wrapper);
+      resolve(canvas);
+    });
+  });
+}
+
+function downloadCanvas(canvas, filename) {
+  const link = document.createElement('a');
+  link.download = filename;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+function getExportFilename(chartType) {
+  const brand = (state.config.brandName || 'Brand').replace(/[^a-zA-Z0-9]/g, '_');
+  const mode = state.compareMode;
+  const date = new Date().toISOString().split('T')[0].replace(/-/g, '');
+  return `${brand}_${mode}_${chartType}_${date}_MemoryScore.png`;
+}
+
+// Export individual chart
+window.exportChart = async function(chartType) {
+  const ctx = getExportContext();
+  const period = state.config.period || '';
+  const category = state.config.category || '';
+  const extraInfo = `${category} \u2022 ${period} \u2022 Memory Score\u2122 Brand Diagnostic`;
+  
+  let canvas, title, subtitle;
+  
+  if (chartType === 'radar') {
+    const chartObj = state.compareMode === 'category' ? benchmarkRadarChart : radarChart;
+    if (!chartObj) return;
+    title = state.compareMode === 'category' 
+      ? 'Relative Performance Radar (% of Category)' 
+      : 'Memory Score Radar Comparison';
+    subtitle = `${ctx.brandLabel} ${ctx.modeLabel} ${ctx.compLabel}`;
+    const exportCanvas = buildExportCanvas(chartObj.canvas, title, subtitle, extraInfo);
+    downloadCanvas(exportCanvas, getExportFilename('radar'));
+  }
+  else if (chartType === 'gap') {
+    const chartObj = state.compareMode === 'category' ? gapBarChart :
+                     state.compareMode === 'competitor' ? competitorGapChart : previousGapChart;
+    if (!chartObj) return;
+    title = state.compareMode === 'category' 
+      ? '% Change from Category Benchmark'
+      : state.compareMode === 'competitor'
+      ? '% Change vs Competitor'
+      : '% Change vs Previous Period';
+    subtitle = `${ctx.brandLabel} ${ctx.modeLabel} ${ctx.compLabel}`;
+    const exportCanvas = buildExportCanvas(chartObj.canvas, title, subtitle, extraInfo);
+    downloadCanvas(exportCanvas, getExportFilename('gap_chart'));
+  }
+  else if (chartType === 'table') {
+    // Find the comparison table in the DOM
+    const tables = document.querySelectorAll('#compareContent .col-span-2 table');
+    const tableEl = tables[tables.length - 1]; // last table in the chart area
+    if (!tableEl) return;
+    title = 'Memory Score Stage Comparison';
+    subtitle = `${ctx.brandLabel} ${ctx.modeLabel} ${ctx.compLabel}`;
+    const exportCanvas = await buildTableExportCanvas(tableEl, title, subtitle, extraInfo);
+    downloadCanvas(exportCanvas, getExportFilename('table'));
+  }
+};
+
+// Export all charts at once
+window.exportAllCompareCharts = async function() {
+  const types = ['radar', 'gap', 'table'];
+  for (const type of types) {
+    await exportChart(type);
+    // Small delay between downloads so browser doesn't block them
+    await new Promise(r => setTimeout(r, 300));
+  }
+};
+
+// ===================== RENDER FUNCTIONS =====================
+function isEditor() { return state.accessRole === 'editor'; }
+
+function renderPreviewBanner() {
+  if (!state.isPreviewingAsViewer) return '';
+  return `
+    <div class="max-w-7xl mx-auto mb-3 print-hide">
+      <div class="bg-amber-500 rounded-xl px-4 py-2.5 flex items-center justify-between shadow-sm">
+        <div class="flex items-center gap-2.5 text-white">
+          ${icon('eye', 'w-4 h-4')}
+          <span class="text-sm font-semibold">Previewing as Viewer</span>
+          <span class="text-amber-100 text-xs">This is how viewers will see the report</span>
+        </div>
+        <button onclick="exitPreview()" class="flex items-center gap-1.5 px-3 py-1.5 bg-white text-amber-700 rounded-lg text-xs font-semibold hover:bg-amber-50 transition-all">
+          ${icon('x', 'w-3.5 h-3.5')} Exit Preview
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function renderHeader() {
+  const overall = getOverall();
+  const roleBadge = isEditor() 
+    ? `<span class="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-emerald-100 text-emerald-700 border border-emerald-200">${icon('edit-3', 'w-3 h-3')} Editor</span>`
+    : `<span class="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-blue-100 text-blue-700 border border-blue-200">${icon('eye', 'w-3 h-3')} Viewer</span>`;
+  return `
+    <div class="max-w-7xl mx-auto mb-4 print-hide">
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow">
+              ${icon('brain', 'w-5 h-5 text-white')}
+            </div>
+            <div>
+              <h1 class="text-xl font-bold text-slate-800">Memory Score™</h1>
+              <p class="text-xs text-slate-500">Brand Memory Diagnostic Framework</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-4">
+            ${roleBadge}
+            <div class="text-right">
+              <div class="text-xs text-slate-500">Overall Score</div>
+              <div class="text-2xl font-bold ${getColor(overall)}">${overall}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderNav() {
+  const contentTabs = [
+    { id: 'import', label: 'Import', icon: 'file-spreadsheet' },
+    { id: 'input', label: 'Input', icon: 'edit-3' },
+    { id: 'dashboard', label: 'Dashboard', icon: 'bar-chart-3' },
+    { id: 'compare', label: 'Compare', icon: 'hexagon' },
+    { id: 'framework', label: 'Framework', icon: 'settings' }
+  ];
+  
+  const permTab = { id: 'permissions', label: 'Permissions', icon: 'shield' };
+  
+  // For viewers: filter out hidden content tabs, no permissions tab
+  const visibleContentTabs = state.accessRole === 'viewer' 
+    ? contentTabs.filter(t => !state.viewerHiddenTabs.includes(t.id))
+    : contentTabs;
+  
+  const allVisibleTabs = state.accessRole === 'editor' 
+    ? [...visibleContentTabs, permTab]
+    : visibleContentTabs;
+  
+  return `
+    <div class="max-w-7xl mx-auto mb-4 print-hide">
+      <div class="flex gap-1 bg-white rounded-xl border border-slate-200 p-1 shadow-sm">
+        ${allVisibleTabs.map(t => `
+          <button onclick="setView('${t.id}')" class="tab-btn flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all ${state.view === t.id ? (t.id === 'permissions' ? 'bg-slate-800 text-white' : 'active') : 'text-slate-600 hover:bg-slate-100'}">
+            ${icon(t.icon, 'w-4 h-4')}
+            ${t.label}
+          </button>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderImportView() {
+  const hasData = state.parsedTable.rows.length > 0;
+  
+  let tableHTML = '';
+  if (hasData) {
+    tableHTML = `
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mt-4">
+        <h3 class="font-semibold text-slate-800 mb-4">3. Parsed Data Table</h3>
+        <div class="overflow-x-auto mb-6">
+          <table class="w-full text-sm border-collapse">
+            <thead>
+              <tr class="bg-slate-100">
+                <th class="text-left px-3 py-2 font-semibold text-slate-700 border-b border-slate-200">Role</th>
+                <th class="text-left px-3 py-2 font-semibold text-slate-700 border-b border-slate-200">Name</th>
+                ${YOUGOV_COLS.map(col => `<th class="text-center px-2 py-2 font-semibold text-slate-700 border-b border-slate-200 whitespace-nowrap text-xs">${col.replace('Former Customer','Former').replace('Purchase Intent','Intent').replace('WOM Exposure','WOM')}</th>`).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              ${state.parsedTable.rows.map((row, idx) => {
+                const isBrand = idx === state.brandRowIdx;
+                const isComp = idx === state.competitorRowIdx;
+                const isCat = idx === state.categoryRowIdx;
+                const bg = isBrand ? 'bg-emerald-50' : isComp ? 'bg-rose-50' : isCat ? 'bg-blue-50' : 'bg-white';
+                const bc = isBrand ? 'border-emerald-300' : isComp ? 'border-rose-300' : isCat ? 'border-blue-300' : 'border-slate-200';
+                const roleTag = isBrand ? '<span class="px-2 py-0.5 bg-emerald-500 text-white text-xs rounded font-semibold">Brand</span>' :
+                               isComp ? '<span class="px-2 py-0.5 bg-rose-500 text-white text-xs rounded font-semibold">Competitor</span>' :
+                               isCat ? '<span class="px-2 py-0.5 bg-blue-500 text-white text-xs rounded font-semibold">Category</span>' : '';
+                return `
+                  <tr class="${bg} border-l-4 ${bc}">
+                    <td class="px-3 py-2 border-b border-slate-100">${roleTag}</td>
+                    <td class="px-3 py-2 border-b border-slate-100 font-medium text-slate-800 whitespace-nowrap">${row.name}</td>
+                    ${YOUGOV_COLS.map(col => `<td class="text-center px-2 py-2 border-b border-slate-100 font-mono text-slate-600">${row.values[col] !== undefined ? row.values[col] : '—'}</td>`).join('')}
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+        
+        <div class="grid grid-cols-3 gap-4 mb-6">
+          <div>
+            <label class="block text-xs font-bold text-emerald-700 mb-1 uppercase">Your Brand</label>
+            <select onchange="setBrandRow(this.value)" class="w-full px-3 py-2 border-2 border-emerald-400 bg-emerald-50 rounded-lg text-sm font-medium">
+              ${state.parsedTable.rows.map((row, idx) => `<option value="${idx}" ${idx === state.brandRowIdx ? 'selected' : ''}>${row.name}</option>`).join('')}
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-rose-700 mb-1 uppercase">Competitor</label>
+            <select onchange="setCompetitorRow(this.value)" class="w-full px-3 py-2 border-2 border-rose-400 bg-rose-50 rounded-lg text-sm font-medium">
+              <option value="-1" ${state.competitorRowIdx === -1 ? 'selected' : ''}>None</option>
+              ${state.parsedTable.rows.map((row, idx) => `<option value="${idx}" ${idx === state.competitorRowIdx ? 'selected' : ''} ${idx === state.brandRowIdx ? 'disabled' : ''}>${row.name}</option>`).join('')}
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-blue-700 mb-1 uppercase">Category Benchmark</label>
+            <select onchange="setCategoryRow(this.value)" class="w-full px-3 py-2 border-2 border-blue-400 bg-blue-50 rounded-lg text-sm font-medium">
+              <option value="-1" ${state.categoryRowIdx === -1 ? 'selected' : ''}>None</option>
+              ${state.parsedTable.rows.map((row, idx) => `<option value="${idx}" ${idx === state.categoryRowIdx ? 'selected' : ''} ${idx === state.brandRowIdx || idx === state.competitorRowIdx ? 'disabled' : ''}>${row.name}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        
+        <div class="flex items-center justify-between pt-4 border-t border-slate-200">
+          <button onclick="clearImport()" class="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg flex items-center gap-1">
+            ${icon('trash-2', 'w-4 h-4')} Clear All
+          </button>
+          <button onclick="applyImportData()" ${!state.periodStartDate || !state.periodEndDate ? 'disabled' : ''} class="px-6 py-2.5 ${!state.periodStartDate || !state.periodEndDate ? 'bg-slate-300 cursor-not-allowed' : 'bg-emerald-500 hover:bg-emerald-600'} text-white rounded-lg font-semibold flex items-center gap-2" ${!state.periodStartDate || !state.periodEndDate ? 'title="Please select a period date range"' : ''}>
+            Apply & View Dashboard ${icon('arrow-right', 'w-4 h-4')}
+          </button>
+        </div>
+      </div>
+    `;
+  }
+  
+  return `
+    <div class="max-w-5xl mx-auto">
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+            ${icon('file-spreadsheet', 'w-5 h-5 text-emerald-600')}
+          </div>
+          <div>
+            <h2 class="font-semibold text-slate-800">Import from YouGov BrandIndex</h2>
+            <p class="text-sm text-slate-500">Paste table → Assign rows → Apply</p>
+          </div>
+        </div>
+        
+        <div class="grid grid-cols-3 gap-4 mb-4">
+          <div class="col-span-2">
+            <label class="block text-sm font-medium text-slate-700 mb-1">1. Paste YouGov Table</label>
+            <textarea id="pasteInput" onchange="handlePaste(this.value)" oninput="handlePaste(this.value)" placeholder='Click "Copy table" in YouGov, then paste here. Use Ctrl+V / Cmd+V directly without modifying the copied data.' class="w-full h-24 px-3 py-2 border border-slate-200 rounded-lg text-xs font-mono resize-none focus:ring-2 focus:ring-emerald-500 focus:outline-none">${state.pasteText}</textarea>
+            <p class="text-xs text-slate-400 mt-1">Tip: Paste directly from YouGov using Ctrl+V / Cmd+V. Don't edit or reformat the data.</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">2. Period Range <span class="text-rose-500">*</span></label>
+            <div class="flex items-center gap-2">
+              <input type="date" value="${state.periodStartDate}" onchange="handleDateChange('start', this.value)" class="flex-1 px-2 py-2 border ${!state.periodStartDate && state.parsedTable.rows.length > 0 ? 'border-rose-300 bg-rose-50' : 'border-slate-200'} rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+              <span class="text-slate-400 text-sm">→</span>
+              <input type="date" value="${state.periodEndDate}" onchange="handleDateChange('end', this.value)" class="flex-1 px-2 py-2 border ${!state.periodEndDate && state.parsedTable.rows.length > 0 ? 'border-rose-300 bg-rose-50' : 'border-slate-200'} rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+            </div>
+            ${state.parsedTable.rows.length > 0 && (!state.periodStartDate || !state.periodEndDate) ? `
+              <div class="mt-2 text-xs text-rose-600 font-medium">Required to continue</div>
+            ` : ''}
+            ${state.periodStartDate && state.periodEndDate ? `
+              <div class="mt-2 text-xs text-slate-500 text-center">${formatDateRange(state.periodStartDate, state.periodEndDate)}</div>
+            ` : ''}
+            ${state.periodWeeks ? `<div class="mt-2 px-3 py-1.5 bg-emerald-100 text-emerald-800 rounded-lg text-sm font-semibold text-center">${state.periodWeeks} weeks</div>` : ''}
+          </div>
+        </div>
+        
+        ${state.importError ? `
+          <div class="mb-4 p-4 bg-rose-50 border border-rose-200 rounded-lg">
+            <div class="flex items-start gap-3">
+              ${icon('alert-triangle', 'w-5 h-5 text-rose-600 flex-shrink-0 mt-0.5')}
+              <div>
+                <p class="font-semibold text-rose-800 text-sm mb-1">Import Error</p>
+                <p class="text-rose-700 text-sm">${state.importError}</p>
+                ${state.parsedTable.missingFields ? `
+                  <div class="mt-3 pt-3 border-t border-rose-200">
+                    <p class="text-rose-700 text-xs font-medium mb-2">Required YouGov BrandIndex fields:</p>
+                    <div class="flex flex-wrap gap-1.5">
+                      ${YOUGOV_COLS.map(col => {
+                        const isMissing = state.parsedTable.missingFields && state.parsedTable.missingFields.includes(col);
+                        return `<span class="px-2 py-0.5 text-xs rounded ${isMissing ? 'bg-rose-200 text-rose-800 font-semibold' : 'bg-slate-100 text-slate-600'}">${col}${isMissing ? ' ✗' : ' ✓'}</span>`;
+                      }).join('')}
+                    </div>
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+          </div>
+        ` : ''}
+      </div>
+      ${tableHTML}
+    </div>
+  `;
+}
+
+function renderInputView() {
+  const scores = getScores();
+  const overall = getOverall();
+  
+  return `
+    <div class="max-w-7xl mx-auto space-y-4">
+      <!-- Config -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-semibold text-slate-800">Brand Configuration</h2>
+          ${isEditor() ? `
+          <div class="flex gap-2">
+            <button onclick="resetDemo()" class="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 px-2 py-1 rounded hover:bg-slate-100">
+              ${icon('rotate-cw', 'w-3 h-3')} Demo
+            </button>
+            <button onclick="clearAll()" class="flex items-center gap-1 text-xs text-slate-500 hover:text-rose-600 px-2 py-1 rounded hover:bg-slate-100">
+              ${icon('trash-2', 'w-3 h-3')} Clear
+            </button>
+          </div>
+          ` : `
+          <span class="flex items-center gap-1 text-xs text-blue-500 bg-blue-50 px-2 py-1 rounded-lg border border-blue-200">
+            ${icon('lock', 'w-3 h-3')} View Only
+          </span>
+          `}
+        </div>
+        <div class="grid grid-cols-4 gap-3">
+          ${['brandName', 'category', 'period', 'competitor'].map(k => `
+            <input type="text" value="${state.config[k]}" onchange="setConfig('${k}', this.value)" placeholder="${k.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase())}" class="px-3 py-2 border border-slate-200 rounded-lg text-sm ${!isEditor() ? 'bg-slate-50 text-slate-500 cursor-not-allowed' : ''}" ${!isEditor() ? 'disabled' : ''}>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- Live Score Banner -->
+      <div class="bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl p-4 text-white shadow-lg">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-emerald-100 text-xs font-medium">Overall Memory Score</p>
+            <div class="flex items-baseline gap-2">
+              <span class="text-4xl font-bold">${overall}</span>
+            </div>
+            <p class="text-emerald-100 text-xs mt-1">${state.config.period} • YouGov BrandIndex</p>
+          </div>
+          <div class="flex gap-2">
+            ${STAGES.map(s => {
+              const score = scores[s.key];
+              return `
+                <div class="text-center">
+                  <div class="w-10 h-10 rounded-lg flex items-center justify-center mb-1 bg-white/20">
+                    ${icon(s.icon, 'w-4 h-4')}
+                  </div>
+                  <div class="text-sm font-bold">${score}</div>
+                  <div class="text-[10px] text-emerald-100">${s.short}</div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      </div>
+
+      <!-- Metric Cards -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-2.5 mb-4 flex items-center justify-between">
+        <span class="text-xs font-semibold text-slate-600">Score Comparison</span>
+        <div class="flex items-center gap-4">
+          <span class="flex items-center gap-2">
+            <span class="w-5 h-1.5 rounded-full" style="background-color: ${STAGES[0].hex}"></span>
+            <span class="text-[11px] font-medium text-slate-700">${state.config.brandName || 'Brand'}</span>
+          </span>
+          <span class="flex items-center gap-2">
+            <span class="w-5 h-1.5 rounded-full bg-rose-400"></span>
+            <span class="text-[11px] font-medium text-slate-700">${state.config.competitor || 'Competitor'}</span>
+          </span>
+          <span class="flex items-center gap-2">
+            <span class="w-5 h-1.5 rounded-full bg-blue-400"></span>
+            <span class="text-[11px] font-medium text-slate-700">${state.config.category || 'Category'}</span>
+          </span>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        ${STAGES.map(stage => {
+          const score = scores[stage.key];
+          const compScore = state.compScores[stage.key];
+          const catScore = state.catScores[stage.key];
+          const vsComp = score - compScore;
+          const vsCat = score - catScore;
+          
+          return `
+            <div class="bg-white rounded-xl border shadow-sm p-4 border-slate-200">
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2">
+                  <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background-color: ${stage.hex}20">
+                    ${icon(stage.icon, 'w-4 h-4')}
+                  </div>
+                  <div>
+                    <h3 class="font-semibold text-slate-800 text-sm">${stage.name}</h3>
+                    <p class="text-[10px] text-slate-500">${stage.type}</p>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <div class="text-xl font-bold ${getColor(score)}">${score}</div>
+                  <div class="flex items-center gap-1.5 justify-end mt-0.5">
+                    <span class="text-[9px] px-1 py-0.5 rounded font-semibold ${vsComp > 0 ? 'bg-emerald-50 text-emerald-700' : vsComp < 0 ? 'bg-rose-50 text-rose-600' : 'bg-slate-50 text-slate-500'}" title="vs ${state.config.competitor || 'Competitor'}"><span class="font-normal">vs</span> ${state.config.competitor || 'Comp'}: ${vsComp > 0 ? '+' : ''}${vsComp}</span>
+                    <span class="text-[9px] px-1 py-0.5 rounded font-semibold ${vsCat > 0 ? 'bg-emerald-50 text-emerald-700' : vsCat < 0 ? 'bg-rose-50 text-rose-600' : 'bg-slate-50 text-slate-500'}" title="vs ${state.config.category || 'Category'}"><span class="font-normal">vs</span> ${state.config.category || 'Cat'}: ${vsCat > 0 ? '+' : ''}${vsCat}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Progress with benchmark markers -->
+              <div class="mb-2">
+                <div class="h-1.5 bg-slate-100 rounded-full relative">
+                  <div class="h-full rounded-full transition-all" style="width: ${Math.min(score, 100)}%; background-color: ${stage.hex}"></div>
+                  <div class="absolute top-1/2 -translate-y-1/2 w-0.5 h-3 bg-rose-400 rounded" style="left: ${Math.min(compScore, 100)}%"></div>
+                  <div class="absolute top-1/2 -translate-y-1/2 w-0.5 h-3 bg-blue-400 rounded" style="left: ${Math.min(catScore, 100)}%"></div>
+                </div>
+                <div class="relative text-[9px] mt-1 h-3">
+                  <span class="absolute left-0 text-slate-400">0</span>
+                  <span class="absolute text-rose-400 font-medium" style="left: ${Math.min(compScore, 100)}%; transform: translateX(-50%)">${compScore}</span>
+                  <span class="absolute text-blue-400 font-medium" style="left: ${Math.min(catScore, 100)}%; transform: translateX(-50%)">${catScore}</span>
+                  <span class="absolute right-0 text-slate-400">100</span>
+                </div>
+              </div>
+
+              <!-- Formula -->
+              <div class="bg-slate-50 rounded px-2 py-1 mb-2 flex items-center justify-between">
+                <code class="text-[10px] text-slate-500">${stage.formula}</code>
+                <code class="text-[10px] font-semibold" style="color: ${stage.hex}">${getCalc(stage)}</code>
+              </div>
+
+              <!-- Inputs -->
+              <div class="space-y-1.5">
+                ${stage.metrics.map(m => `
+                  <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1 w-28">
+                      <span class="text-xs text-slate-600 truncate">${stage.labels[m]}</span>
+                      <button onclick="toggleTooltip('${m}')" class="text-slate-400 hover:text-slate-600">
+                        ${icon('info', 'w-3 h-3')}
+                      </button>
+                    </div>
+                    <input type="range" min="0" max="100" value="${state.metrics[m]}" oninput="setMetric('${m}', this.value)" class="flex-1 h-1.5 rounded ${!isEditor() ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}" style="accent-color: ${stage.hex}" ${!isEditor() ? 'disabled' : ''}>
+                    <input type="number" min="0" max="100" value="${state.metrics[m]}" onchange="setMetric('${m}', this.value)" class="w-12 px-1.5 py-0.5 text-xs border border-slate-200 rounded text-center ${!isEditor() ? 'bg-slate-50 text-slate-500 cursor-not-allowed' : ''}" ${!isEditor() ? 'disabled' : ''}>
+                  </div>
+                `).join('')}
+              </div>
+
+              ${state.tooltip && stage.metrics.includes(state.tooltip) ? `
+                <div class="mt-2 p-2 bg-slate-800 text-white text-[10px] rounded">${stage.help[state.tooltip]}</div>
+              ` : ''}
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderDashboardView() {
+  const scores = getScores();
+  const overall = getOverall();
+  const sortedStages = [...STAGES].map(s => ({ ...s, score: scores[s.key] })).sort((a, b) => a.score - b.score);
+  const orderedStages = [...STAGES].map(s => ({ ...s, score: scores[s.key] }));
+  
+  return `
+    <div id="dashboardContent" class="max-w-7xl mx-auto space-y-4">
+      <!-- Header -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 avoid-break">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-xl font-bold text-slate-800">${state.config.brandName} Memory Score™ Report</h2>
+            <p class="text-slate-500 text-sm">${state.config.category} • ${state.config.period}</p>
+          </div>
+          <div class="text-right">
+            <div class="text-xs text-slate-500">Overall Score</div>
+            <div class="flex items-center gap-2">
+              <span class="text-4xl font-bold ${getColor(overall)}">${overall}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Executive Summary -->
+      <div class="bg-gradient-to-r from-slate-800 to-slate-900 rounded-xl p-4 text-white avoid-break">
+        <div class="flex items-start gap-2">
+          ${icon('target', 'w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5')}
+          <div>
+            <h3 class="font-semibold text-sm mb-1">Executive Summary</h3>
+            <p class="text-slate-300 text-sm">${getExecutiveSummary()}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-4 avoid-break">
+        <!-- Memory Task Breakdown -->
+        <div class="col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+          <h3 class="font-semibold text-slate-800 mb-1">Memory Task Breakdown</h3>
+          <p class="text-xs text-slate-500 mb-3">Memory lifecycle stages</p>
+          <div class="space-y-3">
+            ${orderedStages.map(stage => {
+              return `
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-lg flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style="background-color: ${stage.hex}">
+                  ${stage.abbr}
+                </div>
+                <div style="flex: 1 1 0%; min-width: 0;">
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="text-sm font-medium text-slate-700">${stage.name}</span>
+                    <span class="text-sm font-bold" style="color: ${stage.hex}">${stage.score}</span>
+                  </div>
+                  <div class="relative" style="height: 16px; padding: 5px 0;">
+                    <div class="absolute left-0 right-0 h-2.5 bg-slate-100 rounded-full" style="top: 5px;">
+                      <div class="h-full rounded-full" style="width: ${Math.min(stage.score, 100)}%; background-color: ${stage.hex}"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `}).join('')}
+          </div>
+        </div>
+
+        <!-- Immediate Actions Required -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+          <h3 class="font-semibold text-slate-800 mb-1">Immediate Actions Required</h3>
+          <p class="text-xs text-slate-500 mb-3">Focus areas ranked by impact</p>
+          <div class="space-y-3">
+            ${sortedStages.slice(0, 3).map((stage, i) => `
+              <div class="p-3 border-2 rounded-lg relative" style="border-color: ${stage.hex}; background-color: ${stage.hex}08">
+                <div class="absolute top-3 right-3 text-sm font-bold px-2 py-0.5 rounded text-white" style="background-color: ${stage.hex}">${stage.score}</div>
+                <div class="flex items-center gap-2 mb-2 pr-12">
+                  <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style="background-color: ${stage.hex}">${i+1}</div>
+                  <span class="text-sm font-semibold" style="color: ${stage.hex}">${stage.name}</span>
+                </div>
+                <p class="text-xs text-slate-600 mb-2 pl-8">${stage.diagnosis}</p>
+                <div class="text-xs text-slate-800 pl-8 flex items-start gap-1">
+                  <span class="font-bold text-emerald-600">→</span>
+                  <span><strong>Action:</strong> ${stage.interventions[0]}</span>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+
+      <!-- Memory Decay Projection -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 page-break-before avoid-break">
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <h3 class="font-semibold text-slate-800 mb-1">Memory Decay Projection</h3>
+            <p class="text-xs text-slate-500">Projected score decline without media support (Ebbinghaus forgetting curve, S=4 weeks)</p>
+          </div>
+        </div>
+        <div class="h-40">
+          <canvas id="decayChart"></canvas>
+        </div>
+        <div class="mt-3 p-3 bg-amber-50 rounded-lg border border-amber-200 pdf-show">
+          <p class="text-xs text-amber-800"><strong>Interpretation:</strong> ${getDecayInterpretation()}</p>
+        </div>
+      </div>
+
+      <!-- Strategic Recommendation (PDF only) -->
+      <div class="bg-emerald-50 rounded-xl border border-emerald-200 p-4 pdf-show avoid-break">
+        <div class="flex items-start gap-3">
+          <div class="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+          </div>
+          <div>
+            <h3 class="font-semibold text-emerald-800 text-sm mb-1">Strategic Recommendation</h3>
+            <p class="text-emerald-700 text-sm">${getStrategicRecommendation()}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- PDF Footer -->
+      <div class="bg-slate-50 rounded-xl p-3 pdf-show avoid-break">
+        <div class="text-center text-xs text-slate-600 font-medium pb-2 mb-2 border-b border-slate-200">
+          Source: YouGov BrandIndex | Prepared by Omnicom Media Canada
+        </div>
+        <div class="flex items-center justify-between text-[10px] text-slate-500">
+          <div>
+            <span class="font-semibold">Memory Score™</span> | Brand Memory Diagnostic Framework | Omnicom Media Canada
+          </div>
+          <div>
+            Generated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderCompareView() {
+  const scores = getScores();
+  const compData = state.compareMode === 'competitor' ? state.compScores : 
+                   state.compareMode === 'category' ? state.catScores : 
+                   state.prevScores || { create: 0, expand: 0, strengthen: 0, retrieve: 0, reinvigorate: 0, disrupt: 0 };
+  
+  const compLabel = state.compareMode === 'competitor' ? state.config.competitor :
+                    state.compareMode === 'category' ? state.config.category :
+                    state.prevPeriod || 'Previous';
+  
+  const brandLabel = state.compareMode === 'previous' ? (state.config.period || 'Current') : state.config.brandName;
+  
+  // Previous period import section
+  let prevImportSection = '';
+  if (state.showPrevImport) {
+    const prevWeeks = (state.prevStartDate && state.prevEndDate) ? 
+      Math.round(Math.abs(new Date(state.prevEndDate) - new Date(state.prevStartDate)) / (7 * 24 * 60 * 60 * 1000)) : null;
+    
+    prevImportSection = `
+      <div class="bg-amber-50 rounded-xl border border-amber-200 p-4 mb-3 pdf-hide">
+        <h4 class="font-semibold text-amber-800 text-sm mb-3 flex items-center gap-2">
+          ${icon('calendar', 'w-4 h-4')} Import Previous Period Data
+        </h4>
+        
+        <div class="mb-3">
+          <label class="block text-xs font-medium text-amber-700 mb-1">Period Range</label>
+          <div class="flex items-center gap-2">
+            <input type="date" value="${state.prevStartDate}" onchange="handlePrevDateChange('start', this.value)" class="flex-1 px-2 py-2 border border-amber-300 rounded-lg text-sm bg-white">
+            <span class="text-amber-400 text-sm">→</span>
+            <input type="date" value="${state.prevEndDate}" onchange="handlePrevDateChange('end', this.value)" class="flex-1 px-2 py-2 border border-amber-300 rounded-lg text-sm bg-white">
+          </div>
+          ${state.prevStartDate && state.prevEndDate ? `
+            <div class="mt-2 text-xs text-amber-600 text-center">${formatDateRange(state.prevStartDate, state.prevEndDate)}</div>
+          ` : ''}
+          ${prevWeeks ? `<div class="mt-2 px-3 py-1.5 bg-amber-200 text-amber-800 rounded-lg text-sm font-semibold text-center">${prevWeeks} weeks</div>` : ''}
+        </div>
+        
+        <div class="mb-3">
+          <label class="block text-xs font-medium text-amber-700 mb-1">Paste YouGov Table</label>
+          <textarea onchange="handlePrevPaste(this.value)" oninput="handlePrevPaste(this.value)" placeholder="Paste YouGov table for previous period..." class="w-full h-20 px-3 py-2 border border-amber-300 rounded-lg text-xs font-mono resize-none bg-white">${state.prevPasteText}</textarea>
+        </div>
+        
+        ${state.prevImportError ? `
+          <div class="mb-3 p-2 bg-rose-100 border border-rose-200 rounded text-rose-700 text-xs">
+            ${state.prevImportError}
+          </div>
+        ` : ''}
+        
+        ${state.prevParsedTable.rows.length > 0 ? `
+          <div class="mb-3">
+            <label class="block text-xs font-medium text-amber-700 mb-1">Select Your Brand Row</label>
+            <select onchange="setPrevBrandRow(this.value)" class="w-full px-3 py-2 border-2 border-amber-400 bg-amber-100 rounded-lg text-sm font-medium">
+              ${state.prevParsedTable.rows.map((row, idx) => `<option value="${idx}" ${idx === state.prevBrandRowIdx ? 'selected' : ''}>${row.name}</option>`).join('')}
+            </select>
+          </div>
+        ` : ''}
+        
+        <div class="flex gap-2">
+          <button onclick="cancelPrevImport()" class="flex-1 px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
+          <button onclick="applyPrevImport()" ${state.prevParsedTable.rows.length === 0 || !state.prevStartDate || !state.prevEndDate ? 'disabled' : ''} class="flex-1 px-3 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed font-semibold flex items-center justify-center gap-1">
+            ${icon('check-circle', 'w-4 h-4')} Save
+          </button>
+        </div>
+      </div>
+    `;
+  }
+  
+  // Currently loaded previous data
+  let prevDataCard = '';
+  if (state.compareMode === 'previous' && state.prevScores && !state.showPrevImport) {
+    prevDataCard = `
+      <div class="bg-amber-50 rounded-xl border border-amber-200 p-3 mb-3">
+        <div class="flex items-center justify-between mb-2">
+          <h4 class="font-semibold text-amber-800 text-sm">${state.prevPeriod}</h4>
+          <button onclick="clearPrevImport()" class="text-xs text-amber-600 hover:text-amber-800 pdf-hide">Remove</button>
+        </div>
+        <div class="flex gap-1">
+          ${STAGES.map(s => `
+            <div class="flex-1 text-center p-1 rounded bg-white border border-amber-200">
+              <div class="text-[9px] font-medium" style="color: ${s.hex}">${s.short[0]}</div>
+              <div class="font-bold text-xs" style="color: ${s.hex}">${state.prevScores[s.key]}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+  
+  // Growth summary card
+  let growthCard = '';
+  if (state.compareMode === 'previous' && state.prevScores) {
+    const improvements = STAGES.map(s => ({ ...s, change: scores[s.key] - state.prevScores[s.key] })).filter(s => s.change > 0).sort((a, b) => b.change - a.change).slice(0, 2);
+    const declines = STAGES.map(s => ({ ...s, change: scores[s.key] - state.prevScores[s.key] })).filter(s => s.change < 0).sort((a, b) => a.change - b.change).slice(0, 2);
+    const prevOverall = Math.round(Math.pow(Object.values(state.prevScores).reduce((a, v) => a * Math.max(v, 1), 1), 1/6));
+    const overallChange = getOverall() - prevOverall;
+    
+    growthCard = `
+      <div class="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-amber-200 p-4 mb-3 avoid-break">
+        <h3 class="font-semibold text-amber-800 text-sm mb-3 flex items-center gap-2">
+          ${icon('trending-up', 'w-4 h-4')} Growth Summary
+        </h3>
+        <div class="text-xs text-amber-700 mb-3">${state.prevPeriod} → ${state.config.period || 'Current'}</div>
+        
+        <div class="mb-3">
+          <div class="text-[10px] font-semibold text-emerald-700 uppercase mb-1.5">Biggest Improvements</div>
+          ${improvements.length > 0 ? improvements.map(s => `
+            <div class="flex items-center justify-between bg-emerald-100 rounded p-2 mb-1">
+              <span class="font-medium text-emerald-800 text-xs">${s.name}</span>
+              <span class="font-bold text-emerald-600 text-xs">+${s.change} ↑</span>
+            </div>
+          `).join('') : '<div class="text-slate-400 text-[10px] italic">No improvements</div>'}
+        </div>
+        
+        <div class="mb-3">
+          <div class="text-[10px] font-semibold text-rose-700 uppercase mb-1.5">Areas of Concern</div>
+          ${declines.length > 0 ? declines.map(s => `
+            <div class="flex items-center justify-between bg-rose-100 rounded p-2 mb-1">
+              <span class="font-medium text-rose-800 text-xs">${s.name}</span>
+              <span class="font-bold text-rose-600 text-xs">${s.change} ↓</span>
+            </div>
+          `).join('') : '<div class="text-slate-400 text-[10px] italic">No declines — great progress!</div>'}
+        </div>
+        
+        <div class="pt-3 border-t border-amber-200">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-amber-800">Overall Score Change</span>
+            <span class="font-bold ${overallChange > 0 ? 'text-emerald-600' : overallChange < 0 ? 'text-rose-600' : 'text-slate-500'}">
+              ${prevOverall} → ${getOverall()} (${overallChange > 0 ? '+' : ''}${overallChange})
+            </span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  
+  // Competitor/Category editor
+  let scoresEditor = '';
+  if (state.compareMode !== 'previous') {
+    const editScores = state.compareMode === 'competitor' ? state.compScores : state.catScores;
+    scoresEditor = `
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-3 mb-3 pdf-hide">
+        <h3 class="font-semibold text-slate-800 text-sm mb-2">${state.compareMode === 'competitor' ? 'Competitor' : 'Category'} Scores</h3>
+        <div class="space-y-2">
+          ${STAGES.map(s => `
+            <div class="flex items-center gap-2">
+              ${icon(s.icon, 'w-3.5 h-3.5')}
+              <span class="text-xs text-slate-600 w-16">${s.short}</span>
+              <input type="range" min="0" max="100" value="${editScores[s.key]}" oninput="setCompareScore('${s.key}', this.value)" class="flex-1 h-1 rounded ${!isEditor() ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}" style="accent-color: ${state.compareMode === 'competitor' ? '#f43f5e' : '#3b82f6'}" ${!isEditor() ? 'disabled' : ''}>
+              <input type="number" min="0" max="100" value="${editScores[s.key]}" onchange="setCompareScore('${s.key}', this.value)" class="w-10 px-1 py-0.5 text-[10px] border border-slate-200 rounded text-center ${!isEditor() ? 'bg-slate-50 text-slate-500 cursor-not-allowed' : ''}" ${!isEditor() ? 'disabled' : ''}>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+  
+  return `
+    <div id="compareContent" class="max-w-7xl mx-auto">
+      <!-- PDF Header -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 mb-4 pdf-show avoid-break">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-xl font-bold text-slate-800">${state.config.brandName} Memory Score™ Comparison</h2>
+            <p class="text-slate-500 text-sm">${state.config.category} • ${state.config.period}</p>
+          </div>
+          <div class="text-right">
+            <div class="text-xs text-slate-500">Comparison Type</div>
+            <div class="text-lg font-bold ${state.compareMode === 'competitor' ? 'text-rose-500' : state.compareMode === 'category' ? 'text-blue-500' : 'text-amber-500'}">
+              ${state.compareMode === 'competitor' ? 'vs Competitor' : state.compareMode === 'category' ? 'vs Category' : 'vs Previous Period'}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-4 avoid-break">
+        <div class="col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+          <!-- Sticky Header with Toggle -->
+          <div class="sticky top-0 bg-white z-10 pb-3 mb-3 border-b border-slate-100">
+            <div class="flex items-center justify-between">
+              <div>
+                <h2 class="font-semibold text-slate-800">Memory Score Comparison</h2>
+                <div class="text-sm text-slate-500 mt-0.5">
+                  ${state.compareMode === 'competitor' ? `${state.config.brandName} vs ${state.config.competitor}` : 
+                    state.compareMode === 'category' ? `${state.config.brandName} vs ${state.config.category}` :
+                    `${state.config.period || 'Current'} vs ${state.prevPeriod || 'Previous'}`}
+                </div>
+              </div>
+              <div class="flex items-center gap-2 pdf-hide">
+                <div class="flex gap-1 bg-slate-100 p-1 rounded-lg">
+                  <button onclick="setCompareMode('competitor')" class="px-3 py-1.5 rounded-md text-xs font-medium transition-all ${state.compareMode === 'competitor' ? 'bg-rose-500 text-white shadow-sm' : 'text-slate-600 hover:bg-white'}">vs Competitor</button>
+                  <button onclick="setCompareMode('category')" class="px-3 py-1.5 rounded-md text-xs font-medium transition-all ${state.compareMode === 'category' ? 'bg-blue-500 text-white shadow-sm' : 'text-slate-600 hover:bg-white'}">vs Category</button>
+                  <button onclick="setCompareMode('previous')" class="px-3 py-1.5 rounded-md text-xs font-medium transition-all ${state.compareMode === 'previous' ? 'bg-amber-500 text-white shadow-sm' : 'text-slate-600 hover:bg-white'}">vs Previous</button>
+                </div>
+                <button onclick="exportAllCompareCharts()" class="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 text-white rounded-lg text-xs font-medium hover:bg-emerald-600 transition-all shadow-sm" title="Download all charts as PNG">
+                  ${icon('download', 'w-3.5 h-3.5')} Save All
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          ${state.compareMode === 'previous' && !state.prevScores ? `
+            <div class="h-72 flex items-center justify-center">
+              <div class="text-center text-slate-500">
+                ${icon('calendar', 'w-12 h-12 mx-auto mb-2 text-slate-300')}
+                <p class="font-medium">No Previous Period Data</p>
+                <p class="text-sm mb-3">Import historical data to compare growth</p>
+                <button onclick="showPrevImportPanel()" class="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 text-sm font-medium">
+                  ${icon('upload', 'w-4 h-4')} Import Previous Period
+                </button>
+              </div>
+            </div>
+          ` : `
+            <!-- Chart Mode Toggle -->
+            ${state.compareMode === 'category' ? `
+              <!-- CATEGORY VIEW: % of Category -->
+              <div class="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 mb-3">
+                <p class="text-[11px] text-blue-700">Scores as % of category average. 100% = at parity.</p>
+              </div>
+
+              <div class="relative h-64 mb-4">
+                <canvas id="benchmarkRadarChart"></canvas>
+                <button onclick="exportChart('radar')" class="absolute top-1 right-1 p-1.5 bg-white border border-slate-200 rounded-lg text-slate-400 hover:text-emerald-600 hover:border-emerald-300 transition-all shadow-sm pdf-hide" title="Save as PNG">
+                  ${icon('download', 'w-3.5 h-3.5')}
+                </button>
+              </div>
+              
+              <div class="relative h-56 mb-4">
+                <canvas id="gapBarChart"></canvas>
+                <button onclick="exportChart('gap')" class="absolute top-1 right-1 p-1.5 bg-white border border-slate-200 rounded-lg text-slate-400 hover:text-emerald-600 hover:border-emerald-300 transition-all shadow-sm pdf-hide" title="Save as PNG">
+                  ${icon('download', 'w-3.5 h-3.5')}
+                </button>
+              </div>
+
+              <div class="relative">
+              <button onclick="exportChart('table')" class="absolute top-0 right-0 p-1.5 bg-white border border-slate-200 rounded-lg text-slate-400 hover:text-emerald-600 hover:border-emerald-300 transition-all shadow-sm pdf-hide" title="Save table as PNG">
+                ${icon('download', 'w-3.5 h-3.5')}
+              </button>
+              <table class="w-full text-xs">
+                <thead>
+                  <tr class="text-slate-500 border-b border-slate-200">
+                    <th class="text-left py-2">Stage</th>
+                    <th class="text-center py-2">${state.config.brandName}</th>
+                    <th class="text-center py-2">${state.config.category || 'Category'}</th>
+                    <th class="text-center py-2">% Change</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${STAGES.map(s => {
+                    const score = scores[s.key];
+                    const cat = state.catScores[s.key];
+                    let scoreDisplay, catDisplay, gapPct;
+                    if (s.key === 'disrupt') {
+                      const catImp = state.metrics.categoryImpression;
+                      const brandImp = state.metrics.brandImpression;
+                      scoreDisplay = brandImp;
+                      catDisplay = catImp;
+                      gapPct = catImp > 0 ? Math.round(((brandImp - catImp) / catImp) * 100) : 0;
+                    } else {
+                      scoreDisplay = score;
+                      catDisplay = cat;
+                      gapPct = cat > 0 ? Math.round(((score - cat) / cat) * 100) : 0;
+                    }
+                    return `
+                      <tr class="border-b border-slate-100">
+                        <td class="py-2 flex items-center gap-1.5">
+                          <div class="w-2 h-2 rounded-full" style="background:${s.hex}"></div>
+                          <span style="color:${s.hex}" class="font-medium">${s.short}</span>
+                        </td>
+                        <td class="text-center font-bold" style="color:${s.hex}">${scoreDisplay}</td>
+                        <td class="text-center text-blue-500 font-semibold">${catDisplay}</td>
+                        <td class="text-center font-bold ${gapPct > 0 ? 'text-emerald-600' : gapPct < 0 ? 'text-rose-500' : 'text-slate-400'}">${gapPct > 0 ? '+' : ''}${gapPct}%</td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+              </div>
+              
+              <div class="mt-3 text-[10px] text-slate-400 flex items-center gap-1">
+                ${icon('info', 'w-3 h-3')}
+                <span>Disrupt uses Impression values (already relative to category)</span>
+              </div>
+            ` : `
+              <!-- COMPETITOR / PREVIOUS VIEW -->
+              ${state.compareMode === 'competitor' ? `
+              <div class="relative h-64 mb-4">
+                <canvas id="radarChart"></canvas>
+                <button onclick="exportChart('radar')" class="absolute top-1 right-1 p-1.5 bg-white border border-slate-200 rounded-lg text-slate-400 hover:text-emerald-600 hover:border-emerald-300 transition-all shadow-sm pdf-hide" title="Save as PNG">
+                  ${icon('download', 'w-3.5 h-3.5')}
+                </button>
+              </div>
+              
+              <div class="relative h-56 mb-4">
+                <canvas id="competitorGapChart"></canvas>
+                <button onclick="exportChart('gap')" class="absolute top-1 right-1 p-1.5 bg-white border border-slate-200 rounded-lg text-slate-400 hover:text-emerald-600 hover:border-emerald-300 transition-all shadow-sm pdf-hide" title="Save as PNG">
+                  ${icon('download', 'w-3.5 h-3.5')}
+                </button>
+              </div>
+              
+              <div class="relative">
+              <button onclick="exportChart('table')" class="absolute top-0 right-0 p-1.5 bg-white border border-slate-200 rounded-lg text-slate-400 hover:text-emerald-600 hover:border-emerald-300 transition-all shadow-sm pdf-hide" title="Save table as PNG">
+                ${icon('download', 'w-3.5 h-3.5')}
+              </button>
+              <table class="w-full text-xs">
+                <thead>
+                  <tr class="text-slate-500 border-b border-slate-200">
+                    <th class="text-left py-2">Stage</th>
+                    <th class="text-center py-2">${brandLabel}</th>
+                    <th class="text-center py-2">${compLabel}</th>
+                    <th class="text-center py-2">% Change</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${STAGES.map(s => {
+                    const current = scores[s.key];
+                    const comp = compData[s.key] || 0;
+                    const gapPct = comp > 0 ? Math.round(((current - comp) / comp) * 100) : 0;
+                    return `
+                      <tr class="border-b border-slate-100">
+                        <td class="py-2 flex items-center gap-1.5">
+                          <div class="w-2 h-2 rounded-full" style="background:${s.hex}"></div>
+                          <span style="color:${s.hex}" class="font-medium">${s.short}</span>
+                        </td>
+                        <td class="text-center font-bold text-emerald-600">${current}</td>
+                        <td class="text-center font-bold text-rose-500">${comp}</td>
+                        <td class="text-center font-bold ${gapPct > 0 ? 'text-emerald-600' : gapPct < 0 ? 'text-rose-500' : 'text-slate-400'}">${gapPct > 0 ? '+' : ''}${gapPct}%</td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+              </div>
+              ` : `
+              <!-- PREVIOUS VIEW: Radar + Bar + Table -->
+              <div class="relative h-64 mb-4">
+                <canvas id="radarChart"></canvas>
+                <button onclick="exportChart('radar')" class="absolute top-1 right-1 p-1.5 bg-white border border-slate-200 rounded-lg text-slate-400 hover:text-emerald-600 hover:border-emerald-300 transition-all shadow-sm pdf-hide" title="Save as PNG">
+                  ${icon('download', 'w-3.5 h-3.5')}
+                </button>
+              </div>
+              
+              <div class="relative h-56 mb-4">
+                <canvas id="previousGapChart"></canvas>
+                <button onclick="exportChart('gap')" class="absolute top-1 right-1 p-1.5 bg-white border border-slate-200 rounded-lg text-slate-400 hover:text-emerald-600 hover:border-emerald-300 transition-all shadow-sm pdf-hide" title="Save as PNG">
+                  ${icon('download', 'w-3.5 h-3.5')}
+                </button>
+              </div>
+              
+              <div class="relative">
+              <button onclick="exportChart('table')" class="absolute top-0 right-0 p-1.5 bg-white border border-slate-200 rounded-lg text-slate-400 hover:text-emerald-600 hover:border-emerald-300 transition-all shadow-sm pdf-hide" title="Save table as PNG">
+                ${icon('download', 'w-3.5 h-3.5')}
+              </button>
+              <table class="w-full text-xs">
+                <thead>
+                  <tr class="text-slate-500 border-b border-slate-200">
+                    <th class="text-left py-2">Stage</th>
+                    <th class="text-center py-2">${brandLabel}</th>
+                    <th class="text-center py-2">${compLabel}</th>
+                    <th class="text-center py-2">% Change</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${STAGES.map(s => {
+                    const current = scores[s.key];
+                    const prev = compData[s.key] || 0;
+                    const pctChange = prev > 0 ? Math.round(((current - prev) / prev) * 100) : 0;
+                    return `
+                      <tr class="border-b border-slate-100">
+                        <td class="py-2 flex items-center gap-1.5">
+                          <div class="w-2 h-2 rounded-full" style="background:${s.hex}"></div>
+                          <span style="color:${s.hex}" class="font-medium">${s.short}</span>
+                        </td>
+                        <td class="text-center font-bold" style="color:${s.hex}">${current}</td>
+                        <td class="text-center font-bold text-amber-500">${prev}</td>
+                        <td class="text-center font-bold ${pctChange > 0 ? 'text-emerald-600' : pctChange < 0 ? 'text-rose-500' : 'text-slate-400'}">${pctChange > 0 ? '+' : ''}${pctChange}%</td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+              </div>
+              `}
+            `}
+          `}
+        </div>
+        
+        <div class="space-y-3">
+          ${state.compareMode === 'previous' && !state.showPrevImport ? `
+            <button onclick="showPrevImportPanel()" class="w-full px-4 py-2 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 text-sm font-medium flex items-center justify-center gap-2 border border-amber-200 pdf-hide">
+              ${icon('upload', 'w-4 h-4')} ${state.prevScores ? 'Update' : 'Import'} Previous Period
+            </button>
+          ` : ''}
+          
+          ${prevImportSection}
+          ${growthCard}
+          ${prevDataCard}
+          ${scoresEditor}
+          
+          <!-- Brand Scores Card -->
+          <div class="bg-emerald-50 rounded-xl border border-emerald-200 p-3 avoid-break">
+            <h3 class="font-semibold text-emerald-800 text-sm mb-2">${state.config.brandName}</h3>
+            <div class="space-y-1">
+              ${STAGES.map(s => `
+                <div class="flex items-center justify-between text-xs">
+                  <span style="color: ${s.hex}">${s.short}</span>
+                  <span class="font-bold ${getColor(scores[s.key])}">${scores[s.key]}</span>
+                </div>
+              `).join('')}
+              <div class="border-t border-emerald-300 pt-1 mt-1 flex items-center justify-between">
+                <span class="font-semibold text-emerald-800 text-xs">Overall</span>
+                <span class="text-lg font-bold text-emerald-600">${getOverall()}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Key Findings (PDF only) -->
+      ${(state.compareMode !== 'previous' || state.prevScores) ? `
+        <div class="mt-4 bg-gradient-to-r from-slate-800 to-slate-900 rounded-xl p-4 text-white pdf-show avoid-break">
+          <div class="flex items-start gap-3">
+            <div class="w-6 h-6 rounded-full bg-amber-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg>
+            </div>
+            <div>
+              <h3 class="font-semibold text-sm mb-1">Key Findings</h3>
+              <p class="text-slate-300 text-sm">${getCompareInsights(scores, compData, state.compareMode)}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4 bg-emerald-50 rounded-xl border border-emerald-200 p-4 pdf-show avoid-break">
+          <div class="flex items-start gap-3">
+            <div class="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+            </div>
+            <div>
+              <h3 class="font-semibold text-emerald-800 text-sm mb-1">Strategic Recommendation</h3>
+              <p class="text-emerald-700 text-sm">${getCompareRecommendation(scores, compData, state.compareMode)}</p>
+            </div>
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- PDF Footer -->
+      <div class="mt-4 bg-slate-50 rounded-xl p-3 pdf-show avoid-break">
+        <div class="text-center text-xs text-slate-600 font-medium pb-2 mb-2 border-b border-slate-200">
+          Source: YouGov BrandIndex | Prepared by Omnicom Media Canada
+        </div>
+        <div class="flex items-center justify-between text-[10px] text-slate-500">
+          <div>
+            <span class="font-semibold">Memory Score™</span> | Brand Memory Diagnostic Framework | Omnicom Media Canada
+          </div>
+          <div>
+            Generated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderFrameworkView() {
+  const scores = getScores();
+  const stage = STAGES[state.activeStage];
+  const score = scores[stage.key];
+  
+  return `
+    <div class="max-w-7xl mx-auto space-y-4">
+      <!-- Core Premise -->
+      <div class="bg-gradient-to-r from-slate-800 to-slate-900 rounded-xl p-4 text-white">
+        <div class="flex items-start gap-3">
+          <div class="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+            ${icon('brain', 'w-5 h-5 text-emerald-400')}
+          </div>
+          <div>
+            <h2 class="font-bold mb-1">The Core Premise</h2>
+            <p class="text-slate-300 text-sm">Most purchasing decisions are <span class="text-emerald-400 font-semibold">memory retrieval tasks</span>. ~95% are System 1. Memory Score diagnoses where your brand is failing.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stage Tabs -->
+      <div class="flex gap-1.5 overflow-x-auto pb-1">
+        ${STAGES.map((s, i) => `
+          <button onclick="setActiveStage(${i})" class="flex items-center gap-1.5 px-3 py-2 rounded-lg border-2 transition-all whitespace-nowrap ${state.activeStage === i ? 'shadow-lg' : 'border-slate-200 bg-white'}" style="${state.activeStage === i ? `border-color: ${s.hex}; background-color: ${s.hex}10` : ''}">
+            ${icon(s.icon, 'w-4 h-4')}
+            <span class="text-sm font-medium" style="color: ${state.activeStage === i ? s.hex : '#475569'}">${s.name}</span>
+            <span class="px-1.5 py-0.5 rounded-full text-[10px] font-bold" style="background-color: ${s.hex}20; color: ${s.hex}">${scores[s.key]}</span>
+          </button>
+        `).join('')}
+      </div>
+
+      <div class="grid grid-cols-3 gap-4">
+        <div class="col-span-2 space-y-4">
+          <!-- Stage Header -->
+          <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+            <div class="flex items-start gap-4 mb-4">
+              <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background-color: ${stage.hex}20">
+                ${icon(stage.icon, 'w-6 h-6')}
+              </div>
+              <div class="flex-1">
+                <h2 class="text-xl font-bold" style="color: ${stage.hex}">${stage.name}</h2>
+                <p class="text-slate-600 text-sm mt-1">${stage.diagnosis}</p>
+              </div>
+              <div class="text-right">
+                <div class="text-4xl font-bold ${getColor(score)}">${score}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Questions -->
+          <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+            <h3 class="font-semibold text-slate-800 mb-3 flex items-center gap-2">
+              ${icon('help-circle', 'w-4 h-4')} Questions We're Solving
+            </h3>
+            <div class="space-y-2">
+              ${stage.questions.map((q, i) => `
+                <div class="flex items-start gap-2 p-2 bg-slate-50 rounded">
+                  <div class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0" style="background-color: ${stage.hex}">${i+1}</div>
+                  <p class="text-sm text-slate-700">${q}</p>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- Calculation -->
+          <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+            <h3 class="font-semibold text-slate-800 mb-3">YouGov Calculation</h3>
+            <div class="bg-slate-800 rounded-lg p-3 text-white">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-slate-400 text-[10px]">Formula</p>
+                  <p class="font-mono">${stage.formula}</p>
+                </div>
+                <div class="text-right">
+                  <p class="text-slate-400 text-[10px]">Score</p>
+                  <p class="text-2xl font-bold text-emerald-400">${score}</p>
+                </div>
+              </div>
+              <div class="mt-2 pt-2 border-t border-slate-700">
+                <code class="text-sm text-slate-300">${getCalc(stage)}</code>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <!-- Warning Signs -->
+          <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+            <h3 class="font-semibold text-slate-800 mb-2 flex items-center gap-1.5 text-sm">
+              ${icon('alert-triangle', 'w-3.5 h-3.5 text-amber-500')} Warning Signs
+            </h3>
+            <div class="space-y-1.5">
+              ${stage.warnings.map(w => `
+                <div class="flex items-start gap-1.5 p-2 bg-amber-50 rounded text-xs text-amber-800">
+                  ${icon('chevron-right', 'w-3 h-3 mt-0.5 flex-shrink-0')} ${w}
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- Interventions -->
+          <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+            <h3 class="font-semibold text-slate-800 mb-2 flex items-center gap-1.5 text-sm">
+              ${icon('check-circle', 'w-3.5 h-3.5 text-emerald-500')} Interventions
+            </h3>
+            <div class="space-y-1.5">
+              ${stage.interventions.map(int => `
+                <div class="flex items-start gap-1.5 p-2 bg-emerald-50 rounded text-xs text-emerald-800">
+                  ${icon('chevron-right', 'w-3 h-3 mt-0.5 flex-shrink-0')} ${int}
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ===================== PERMISSIONS VIEW =====================
+function generateViewerURL() {
+  const base = window.location.origin + window.location.pathname;
+  const params = new URLSearchParams();
+  params.set('role', 'viewer');
+  // Encode which content tabs are visible (inverse of hidden)
+  const contentTabs = ['import', 'input', 'dashboard', 'compare', 'framework'];
+  const visibleTabs = contentTabs.filter(t => !state.viewerHiddenTabs.includes(t));
+  params.set('tabs', visibleTabs.join(','));
+  // Encode report data so the link is self-contained
+  const reportData = {
+    c: state.config,
+    m: state.metrics,
+    cs: state.compScores,
+    ca: state.catScores,
+    ps: state.prevScores,
+    pp: state.prevPeriod,
+    pb: state.prevBrandName
+  };
+  params.set('d', btoa(JSON.stringify(reportData)));
+  return base + '?' + params.toString();
+}
+
+function generateEditorURL() {
+  const base = window.location.origin + window.location.pathname;
+  const params = new URLSearchParams();
+  params.set('role', 'editor');
+  // Also encode report data for editor link
+  const reportData = {
+    c: state.config,
+    m: state.metrics,
+    cs: state.compScores,
+    ca: state.catScores,
+    ps: state.prevScores,
+    pp: state.prevPeriod,
+    pb: state.prevBrandName
+  };
+  params.set('d', btoa(JSON.stringify(reportData)));
+  return base + '?' + params.toString();
+}
+
+function renderPermissionsView() {
+  if (isEditor()) {
+    return renderEditorPermissions();
+  } else {
+    return renderViewerPermissions();
+  }
+}
+
+function renderEditorPermissions() {
+  const contentTabs = [
+    { id: 'import', label: 'Import', icon: 'file-spreadsheet', desc: 'Paste YouGov BrandIndex data' },
+    { id: 'input', label: 'Input', icon: 'edit-3', desc: 'Manual metric entry and configuration' },
+    { id: 'dashboard', label: 'Dashboard', icon: 'bar-chart-3', desc: 'Memory Score report and decay chart' },
+    { id: 'compare', label: 'Compare', icon: 'hexagon', desc: 'Competitor, category, and period comparison' },
+    { id: 'framework', label: 'Framework', icon: 'settings', desc: 'Memory task definitions and diagnostics' }
+  ];
+  
+  const viewerURL = generateViewerURL();
+  const visibleCount = contentTabs.filter(t => !state.viewerHiddenTabs.includes(t.id)).length;
+  
+  return `
+    <div class="max-w-4xl mx-auto space-y-4">
+      <!-- Your Access -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+        <div class="flex items-center gap-3 mb-1">
+          <div class="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+            ${icon('shield-check', 'w-5 h-5 text-emerald-600')}
+          </div>
+          <div>
+            <h2 class="font-semibold text-slate-800">Your Access: Editor</h2>
+            <p class="text-sm text-slate-500">Full access to all tabs, data import, and configuration</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Viewer Tab Access Control -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+            ${icon('eye', 'w-5 h-5 text-blue-600')}
+          </div>
+          <div>
+            <h2 class="font-semibold text-slate-800">Viewer Permissions</h2>
+            <p class="text-sm text-slate-500">Configure which tabs are visible when sharing with viewers</p>
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          ${contentTabs.map(t => {
+            const hidden = state.viewerHiddenTabs.includes(t.id);
+            return `
+              <div class="flex items-center justify-between p-3 rounded-lg border transition-all ${hidden ? 'border-slate-200 bg-slate-50' : 'border-emerald-200 bg-emerald-50/50'}">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-lg flex items-center justify-center ${hidden ? 'bg-slate-200' : 'bg-emerald-100'}">
+                    ${icon(t.icon, 'w-4 h-4 ' + (hidden ? 'text-slate-400' : 'text-emerald-600'))}
+                  </div>
+                  <div>
+                    <div class="text-sm font-medium ${hidden ? 'text-slate-400' : 'text-slate-800'}">${t.label}</div>
+                    <div class="text-xs ${hidden ? 'text-slate-400' : 'text-slate-500'}">${t.desc}</div>
+                  </div>
+                </div>
+                <button onclick="toggleViewerTab('${t.id}')" class="relative w-11 h-6 rounded-full transition-all ${hidden ? 'bg-slate-300' : 'bg-emerald-500'}">
+                  <div class="absolute top-0.5 ${hidden ? 'left-0.5' : 'left-[22px]'} w-5 h-5 rounded-full bg-white shadow transition-all"></div>
+                </button>
+              </div>
+            `;
+          }).join('')}
+        </div>
+
+        <div class="mt-3 flex items-center gap-2 text-xs text-slate-500">
+          ${icon('info', 'w-3.5 h-3.5 flex-shrink-0')}
+          <span>Viewers will see <strong>${visibleCount} of 5</strong> content tabs. At least one tab must remain visible. The Permissions tab is always visible to show viewers their access level.</span>
+        </div>
+      </div>
+
+      <!-- Share Links -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
+            ${icon('share-2', 'w-5 h-5 text-amber-600')}
+          </div>
+          <div>
+            <h2 class="font-semibold text-slate-800">Share</h2>
+            <p class="text-sm text-slate-500">Generate links with role-specific access</p>
+          </div>
+        </div>
+
+        <div class="space-y-3">
+          <!-- Viewer Link -->
+          <div class="p-4 rounded-lg border-2 border-blue-200 bg-blue-50/50">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2">
+                ${icon('eye', 'w-4 h-4 text-blue-600')}
+                <span class="text-sm font-semibold text-blue-800">Viewer Link</span>
+              </div>
+              <span class="text-[10px] text-blue-600 font-medium px-2 py-0.5 bg-blue-100 rounded-full">Read-only access</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <input type="text" readonly value="${viewerURL}" class="flex-1 px-3 py-2 bg-white border border-blue-200 rounded-lg text-xs font-mono text-slate-600 truncate" id="viewerLinkInput">
+              <button onclick="copyViewerLink()" id="copyViewerBtn" class="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-all whitespace-nowrap">
+                ${icon('copy', 'w-4 h-4')} Copy
+              </button>
+            </div>
+            <div class="mt-2 flex flex-wrap gap-1.5">
+              ${contentTabs.filter(t => !state.viewerHiddenTabs.includes(t.id)).map(t => `
+                <span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-medium rounded-full flex items-center gap-1">
+                  ${icon('check', 'w-2.5 h-2.5')} ${t.label}
+                </span>
+              `).join('')}
+              ${contentTabs.filter(t => state.viewerHiddenTabs.includes(t.id)).map(t => `
+                <span class="px-2 py-0.5 bg-slate-100 text-slate-400 text-[10px] font-medium rounded-full flex items-center gap-1 line-through">
+                  ${t.label}
+                </span>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- Editor Link -->
+          <div class="p-4 rounded-lg border-2 border-emerald-200 bg-emerald-50/50">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2">
+                ${icon('edit-3', 'w-4 h-4 text-emerald-600')}
+                <span class="text-sm font-semibold text-emerald-800">Editor Link</span>
+              </div>
+              <span class="text-[10px] text-emerald-600 font-medium px-2 py-0.5 bg-emerald-100 rounded-full">Full access</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <input type="text" readonly value="${generateEditorURL()}" class="flex-1 px-3 py-2 bg-white border border-emerald-200 rounded-lg text-xs font-mono text-slate-600 truncate" id="editorLinkInput">
+              <button onclick="copyEditorLink()" id="copyEditorBtn" class="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition-all whitespace-nowrap">
+                ${icon('copy', 'w-4 h-4')} Copy
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Preview as Viewer -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center">
+              ${icon('monitor', 'w-5 h-5 text-slate-600')}
+            </div>
+            <div>
+              <h2 class="font-semibold text-slate-800">Preview</h2>
+              <p class="text-sm text-slate-500">See what viewers will experience</p>
+            </div>
+          </div>
+          <button onclick="previewAsViewer()" class="flex items-center gap-2 px-4 py-2.5 bg-slate-800 text-white rounded-lg text-sm font-medium hover:bg-slate-900 transition-all">
+            ${icon('eye', 'w-4 h-4')} Preview as Viewer
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderViewerPermissions() {
+  const contentTabs = [
+    { id: 'import', label: 'Import', icon: 'file-spreadsheet' },
+    { id: 'input', label: 'Input', icon: 'edit-3' },
+    { id: 'dashboard', label: 'Dashboard', icon: 'bar-chart-3' },
+    { id: 'compare', label: 'Compare', icon: 'hexagon' },
+    { id: 'framework', label: 'Framework', icon: 'settings' }
+  ];
+  
+  const visibleTabs = contentTabs.filter(t => !state.viewerHiddenTabs.includes(t.id));
+  const hiddenTabs = contentTabs.filter(t => state.viewerHiddenTabs.includes(t.id));
+  
+  return `
+    <div class="max-w-3xl mx-auto space-y-4">
+      <!-- Viewer Access Card -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="bg-gradient-to-r from-blue-600 to-blue-700 p-5">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
+              ${icon('eye', 'w-6 h-6 text-white')}
+            </div>
+            <div>
+              <h2 class="text-lg font-bold text-white">Viewer Access</h2>
+              <p class="text-blue-100 text-sm">You have read-only access to this Memory Score report</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="p-5">
+          <!-- Report Context -->
+          <div class="mb-5 p-4 bg-slate-50 rounded-lg border border-slate-200">
+            <div class="grid grid-cols-3 gap-4 text-sm">
+              <div>
+                <div class="text-[10px] font-semibold text-slate-400 uppercase mb-1">Brand</div>
+                <div class="font-medium text-slate-800">${state.config.brandName || 'Not configured'}</div>
+              </div>
+              <div>
+                <div class="text-[10px] font-semibold text-slate-400 uppercase mb-1">Category</div>
+                <div class="font-medium text-slate-800">${state.config.category || 'Not configured'}</div>
+              </div>
+              <div>
+                <div class="text-[10px] font-semibold text-slate-400 uppercase mb-1">Period</div>
+                <div class="font-medium text-slate-800">${state.config.period || 'Not configured'}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Available Tabs -->
+          <div class="mb-4">
+            <h3 class="text-sm font-semibold text-slate-700 mb-3">Your Available Tabs</h3>
+            <div class="space-y-2">
+              ${visibleTabs.map(t => `
+                <div class="flex items-center gap-3 p-3 rounded-lg bg-emerald-50 border border-emerald-200">
+                  <div class="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
+                    ${icon(t.icon, 'w-4 h-4 text-emerald-600')}
+                  </div>
+                  <span class="text-sm font-medium text-emerald-800">${t.label}</span>
+                  <div class="ml-auto">
+                    ${icon('check-circle', 'w-4 h-4 text-emerald-500')}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          ${hiddenTabs.length > 0 ? `
+            <div>
+              <h3 class="text-sm font-semibold text-slate-400 mb-2">Restricted Tabs</h3>
+              <div class="flex flex-wrap gap-2">
+                ${hiddenTabs.map(t => `
+                  <span class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 text-slate-400 text-xs">
+                    ${icon('lock', 'w-3 h-3')} ${t.label}
+                  </span>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
+        </div>
+        
+        <div class="px-5 py-3 bg-slate-50 border-t border-slate-200">
+          <div class="flex items-center gap-2 text-xs text-slate-500">
+            ${icon('info', 'w-3.5 h-3.5 flex-shrink-0')}
+            <span>Tab access is configured by the report editor. Contact them to request additional access.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderFooter() {
+  return `
+    <div class="max-w-7xl mx-auto mt-4 print-hide">
+      <div class="bg-white rounded-xl border border-slate-200 p-3 flex items-center justify-between text-[10px] text-slate-500">
+        <div class="flex gap-4">
+          <span><strong>Kahneman</strong> Dual-Process</span>
+          <span><strong>Sharp/Romaniuk</strong> Mental Availability</span>
+          <span><strong>Ebbinghaus</strong> Memory Decay</span>
+        </div>
+        <span>Memory Score™ • Omnicom Media Canada • YouGov BrandIndex</span>
+      </div>
+    </div>
+  `;
+}
+
+// ===================== FLOATING DOWNLOAD BUTTON =====================
+function renderFloatingDownload() {
+  if (state.view !== 'dashboard') return '';
+  
+  return `
+    <div class="fixed bottom-6 right-6 z-50 print-hide">
+      <button onclick="printDashboard()" class="flex items-center gap-2 px-4 py-3 bg-emerald-500 text-white rounded-full shadow-lg hover:bg-emerald-600 hover:shadow-xl transition-all font-medium">
+        ${icon('printer', 'w-5 h-5')}
+        <span>Print / Save PDF</span>
+      </button>
+    </div>
+  `;
+}
+
+// ===================== MAIN RENDER =====================
+function render() {
+  let content = '';
+  switch (state.view) {
+    case 'import': content = renderImportView(); break;
+    case 'input': content = renderInputView(); break;
+    case 'dashboard': content = renderDashboardView(); break;
+    case 'compare': content = renderCompareView(); break;
+    case 'framework': content = renderFrameworkView(); break;
+    case 'permissions': content = renderPermissionsView(); break;
+  }
+  
+  document.getElementById('app').innerHTML = renderPreviewBanner() + renderHeader() + renderNav() + content + renderFooter() + renderFloatingDownload();
+  initIcons();
+  
+  // Render charts after DOM update
+  setTimeout(() => {
+    if (state.view === 'compare' && (state.compareMode !== 'previous' || state.prevScores)) {
+      if (state.compareMode === 'category') {
+        // Category view: show % of category charts
+        renderBenchmarkRadarChart();
+        renderGapBarChart();
+      } else if (state.compareMode === 'competitor') {
+        // Competitor view: show radar and gap bar
+        renderRadarChart();
+        renderCompetitorGapChart();
+      } else {
+        // Previous view: show radar and change bar
+        renderRadarChart();
+        renderPreviousGapChart();
+      }
+    }
+    if (state.view === 'dashboard') {
+      renderBarChart();
+    }
+  }, 50);
+}
+
+// ===================== EVENT HANDLERS =====================
+window.setAccessRole = function(role) {
+  state.accessRole = role;
+  if (role === 'editor') state.isPreviewingAsViewer = false;
+  // If switching to viewer and current tab is hidden, redirect to first visible tab
+  if (role === 'viewer' && state.viewerHiddenTabs.includes(state.view)) {
+    const contentTabs = ['import', 'input', 'dashboard', 'compare', 'framework'];
+    state.view = contentTabs.find(t => !state.viewerHiddenTabs.includes(t)) || 'dashboard';
+  }
+  render();
+};
+
+window.toggleViewerTab = function(tabId) {
+  const idx = state.viewerHiddenTabs.indexOf(tabId);
+  if (idx > -1) {
+    state.viewerHiddenTabs.splice(idx, 1);
+  } else {
+    // Don't allow hiding all content tabs
+    const contentTabs = ['import', 'input', 'dashboard', 'compare', 'framework'];
+    const visibleCount = contentTabs.filter(t => !state.viewerHiddenTabs.includes(t)).length;
+    if (visibleCount > 1) {
+      state.viewerHiddenTabs.push(tabId);
+    }
+  }
+  render();
+};
+
+window.copyViewerLink = function() {
+  const url = generateViewerURL();
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = document.getElementById('copyViewerBtn');
+    if (btn) {
+      btn.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i> Copied!';
+      btn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+      btn.classList.add('bg-emerald-600');
+      setTimeout(() => { render(); }, 2000);
+    }
+  }).catch(() => {
+    // Fallback: select the input text
+    const input = document.getElementById('viewerLinkInput');
+    if (input) { input.select(); }
+  });
+};
+
+window.copyEditorLink = function() {
+  const url = generateEditorURL();
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = document.getElementById('copyEditorBtn');
+    if (btn) {
+      btn.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i> Copied!';
+      btn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
+      btn.classList.add('bg-slate-800');
+      setTimeout(() => { render(); }, 2000);
+    }
+  }).catch(() => {
+    const input = document.getElementById('editorLinkInput');
+    if (input) { input.select(); }
+  });
+};
+
+window.previewAsViewer = function() {
+  state.accessRole = 'viewer';
+  state.isPreviewingAsViewer = true;
+  // Navigate to first visible content tab
+  const contentTabs = ['dashboard', 'compare', 'framework', 'import', 'input'];
+  state.view = contentTabs.find(t => !state.viewerHiddenTabs.includes(t)) || 'dashboard';
+  render();
+};
+
+window.exitPreview = function() {
+  state.accessRole = 'editor';
+  state.isPreviewingAsViewer = false;
+  state.view = 'permissions';
+  render();
+};
+
+window.setView = function(v) { state.view = v; render(); };
+window.setActiveStage = function(i) { state.activeStage = i; render(); };
+window.setCompareMode = function(m) { state.compareMode = m; render(); };
+window.setChartMode = function(m) { state.compareChartMode = m; render(); };
+window.toggleTooltip = function(m) { state.tooltip = state.tooltip === m ? null : m; render(); };
+
+window.handlePaste = function(text) {
+  if (!isEditor()) return;
+  state.pasteText = text;
+  const result = parseTableGeneric(text);
+  state.parsedTable = result;
+  state.importError = result.error;
+  if (result.rows.length > 0) {
+    state.brandRowIdx = 0;
+    state.competitorRowIdx = result.rows.length > 1 ? 1 : -1;
+    state.categoryRowIdx = result.rows.length > 2 ? 2 : -1;
+  }
+  render();
+};
+
+window.handleDateChange = function(type, value) {
+  if (type === 'start') {
+    state.periodStartDate = value;
+  } else {
+    state.periodEndDate = value;
+  }
+  handlePeriodChange(state.periodStartDate, state.periodEndDate);
+  render();
+};
+
+window.handlePrevDateChange = function(type, value) {
+  if (type === 'start') {
+    state.prevStartDate = value;
+  } else {
+    state.prevEndDate = value;
+  }
+  render();
+};
+
+window.setBrandRow = function(v) { if (!isEditor()) return; state.brandRowIdx = parseInt(v); render(); };
+window.setCompetitorRow = function(v) { if (!isEditor()) return; state.competitorRowIdx = parseInt(v); render(); };
+window.setCategoryRow = function(v) { if (!isEditor()) return; state.categoryRowIdx = parseInt(v); render(); };
+
+window.setConfig = function(key, val) { if (!isEditor()) return; state.config[key] = val; render(); };
+window.setMetric = function(key, val) { if (!isEditor()) return; state.metrics[key] = parseInt(val) || 0; render(); };
+
+window.setCompareScore = function(key, val) {
+  if (!isEditor()) return;
+  if (state.compareMode === 'competitor') {
+    state.compScores[key] = parseInt(val) || 0;
+  } else if (state.compareMode === 'category') {
+    state.catScores[key] = parseInt(val) || 0;
+  }
+  render();
+};
+
+// Previous period handlers
+window.showPrevImportPanel = function() { state.showPrevImport = true; render(); };
+window.cancelPrevImport = function() { 
+  state.showPrevImport = false; 
+  state.prevPasteText = ''; 
+  state.prevStartDate = '';
+  state.prevEndDate = '';
+  state.prevParsedTable = { headers: [], rows: [] }; 
+  state.prevImportError = null; 
+  render(); 
+};
+window.handlePrevPaste = function(text) {
+  state.prevPasteText = text;
+  const result = parseTableGeneric(text);
+  state.prevParsedTable = result;
+  state.prevImportError = result.error;
+  if (result.rows.length > 0) state.prevBrandRowIdx = 0;
+  render();
+};
+window.setPrevBrandRow = function(v) { state.prevBrandRowIdx = parseInt(v); render(); };
+
+// Dropdown handlers
+window.toggleDashboardDropdown = function(event) {
+  event.stopPropagation();
+  state.showDashboardDropdown = !state.showDashboardDropdown;
+  state.showCompareDropdown = false;
+  render();
+};
+
+window.toggleCompareDropdown = function(event) {
+  event.stopPropagation();
+  state.showCompareDropdown = !state.showCompareDropdown;
+  state.showDashboardDropdown = false;
+  render();
+};
+
+// Close dropdowns when clicking outside
+document.addEventListener('click', function(event) {
+  if (state.showDashboardDropdown || state.showCompareDropdown) {
+    state.showDashboardDropdown = false;
+    state.showCompareDropdown = false;
+    render();
+  }
+});
+
+// Print handlers
+window.printDashboard = function() {
+  // Ensure we're on dashboard view
+  if (state.view !== 'dashboard') {
+    state.view = 'dashboard';
+    render();
+  }
+  
+  // Set document title for PDF filename: BRAND_TABNAME_TODAYSDATE_MEMORYSCORE
+  const originalTitle = document.title;
+  const brandName = (state.config.brandName || 'Brand').replace(/[^a-zA-Z0-9]/g, '');
+  const tabName = 'Dashboard';
+  const today = new Date().toISOString().split('T')[0].replace(/-/g, '');
+  document.title = `${brandName}_${tabName}_${today}_MemoryScore`;
+  
+  // Small delay to ensure charts are rendered
+  setTimeout(() => {
+    window.print();
+    // Restore original title after print dialog
+    setTimeout(() => {
+      document.title = originalTitle;
+    }, 500);
+  }, 100);
+};
+
+window.printCompare = function() {
+  // Ensure we're on compare view
+  if (state.view !== 'compare') {
+    state.view = 'compare';
+    render();
+  }
+  
+  // Set document title for PDF filename: BRAND_TABNAME_TODAYSDATE_MEMORYSCORE
+  const originalTitle = document.title;
+  const brandName = (state.config.brandName || 'Brand').replace(/[^a-zA-Z0-9]/g, '');
+  const tabName = 'Compare';
+  const today = new Date().toISOString().split('T')[0].replace(/-/g, '');
+  document.title = `${brandName}_${tabName}_${today}_MemoryScore`;
+  
+  // Small delay to ensure charts are rendered
+  setTimeout(() => {
+    window.print();
+    // Restore original title after print dialog
+    setTimeout(() => {
+      document.title = originalTitle;
+    }, 500);
+  }, 100);
+};
+
+// ===================== URL PARAMETER INITIALIZATION =====================
+(function initFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  const role = params.get('role');
+  
+  // Decode report data if present
+  const dataParam = params.get('d');
+  if (dataParam) {
+    try {
+      const reportData = JSON.parse(atob(dataParam));
+      if (reportData.c) state.config = reportData.c;
+      if (reportData.m) state.metrics = reportData.m;
+      if (reportData.cs) state.compScores = reportData.cs;
+      if (reportData.ca) state.catScores = reportData.ca;
+      if (reportData.ps !== undefined) state.prevScores = reportData.ps;
+      if (reportData.pp !== undefined) state.prevPeriod = reportData.pp;
+      if (reportData.pb !== undefined) state.prevBrandName = reportData.pb;
+    } catch (e) {
+      console.warn('Failed to decode report data from URL:', e);
+    }
+  }
+  
+  if (role === 'viewer') {
+    state.accessRole = 'viewer';
+    // Read tab permissions from URL
+    const tabsParam = params.get('tabs');
+    if (tabsParam) {
+      const allowedTabs = tabsParam.split(',').map(t => t.trim()).filter(Boolean);
+      const allContentTabs = ['import', 'input', 'dashboard', 'compare', 'framework'];
+      state.viewerHiddenTabs = allContentTabs.filter(t => !allowedTabs.includes(t));
+    }
+    // Start viewers on the first visible content tab
+    const contentTabs = ['dashboard', 'compare', 'framework', 'import', 'input'];
+    state.view = contentTabs.find(t => !state.viewerHiddenTabs.includes(t)) || 'dashboard';
+  } else if (role === 'editor') {
+    state.accessRole = 'editor';
+    state.view = 'dashboard';
+  }
+})();
+
+// Initial render
+render();
+</script>
+</body>
+</html>
