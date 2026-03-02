@@ -221,9 +221,12 @@
         /* KPI Grid */
         .kpi-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 12px;
             margin-bottom: 16px;
+        }
+        #kpi-blended-container {
+            display: contents;
         }
 
         .kpi-card {
@@ -1539,10 +1542,12 @@
                         <div class="kpi-value" id="kpi-imps">0</div>
                         <div class="kpi-sub">Total reach</div>
                     </div>
-                    <div class="kpi-card" title="Average Cost Per Mille (cost per 1,000 impressions) across all media">
-                        <div class="kpi-label">Blended CPM</div>
-                        <div class="kpi-value" id="kpi-cpm">$0</div>
-                        <div class="kpi-sub">Cost per thousand</div>
+                    <div id="kpi-blended-container">
+                        <div class="kpi-card" title="Average Cost Per Mille (cost per 1,000 impressions) across all media">
+                            <div class="kpi-label">Blended CPM</div>
+                            <div class="kpi-value" id="kpi-cpm">$0</div>
+                            <div class="kpi-sub">Cost per thousand</div>
+                        </div>
                     </div>
                     <div class="kpi-card" title="Number of unique media partners/vendors in this campaign">
                         <div class="kpi-label">Active Partners</div>
@@ -1567,7 +1572,10 @@
                         <div class="chart-body"><canvas id="mix-chart"></canvas></div>
                     </div>
                     <div class="chart-card">
-                        <div class="chart-header">CPM by Media Type</div>
+                        <div class="chart-header" style="display:flex;align-items:center;justify-content:space-between;">
+                            <span>KPI by Media Type</span>
+                            <select id="kpi-chart-toggle" onchange="updateKpiChart()" style="font-size:11px;padding:2px 8px;border:1px solid #d1d5db;border-radius:6px;background:#fff;color:#1e293b;cursor:pointer;"></select>
+                        </div>
                         <div class="chart-body"><canvas id="cpm-chart"></canvas></div>
                     </div>
                 </div>
@@ -2726,8 +2734,61 @@
 
             document.getElementById('kpi-spend').textContent = formatCurrency(totalSpend);
             document.getElementById('kpi-imps').textContent = formatNumber(totalImps);
-            document.getElementById('kpi-cpm').textContent = '$' + avgCPM.toFixed(2);
             document.getElementById('kpi-partners').textContent = data.length;
+
+            // Build blended KPI cards for each Optimized KPI found in data
+            const blendedKpis = {};
+            data.forEach(p => {
+                const kpi = (p.optimizingKPIs && p.optimizingKPIs[0]) || null;
+                let label;
+                if (kpi) {
+                    const kl = kpi.toLowerCase();
+                    if (kl.includes('viewable') && kl.includes('cpm')) label = 'eCPM';
+                    else if (kl === 'cpm') label = 'CPM';
+                    else if (kl === 'ecpm') label = 'eCPM';
+                    else if (kl === 'cpc') label = 'CPC';
+                    else if (kl === 'cpcv') label = 'CPCV';
+                    else if (kl === 'cple' || kl === 'cplpe') label = 'CPLE';
+                    else if (kl === 'cpa') label = 'CPA';
+                    else if (kl === 'dooh') label = 'CPM';
+                    else label = kpi;
+                } else {
+                    label = 'eCPM';
+                }
+                if (!blendedKpis[label]) blendedKpis[label] = { spend: 0, imps: 0, clicks: 0, completeViews: 0, viewableImps: 0 };
+                const g = blendedKpis[label];
+                g.spend += p.spend;
+                g.imps += p.impressions;
+                g.clicks += p.clicks || 0;
+                g.completeViews += p.completeViews || 0;
+                g.viewableImps += p.viewableImpressions || 0;
+            });
+
+            const kpiDescriptions = {
+                'eCPM': 'Cost per thousand (viewable)',
+                'CPM': 'Cost per thousand impressions',
+                'CPC': 'Cost per click',
+                'CPCV': 'Cost per completed view',
+                'CPLE': 'Cost per total app complete',
+                'CPA': 'Cost per acquisition'
+            };
+
+            let blendedHtml = '';
+            Object.entries(blendedKpis).forEach(([label, g]) => {
+                let val = 0;
+                if (label === 'CPC') val = g.clicks > 0 ? g.spend / g.clicks : 0;
+                else if (label === 'CPCV') val = g.completeViews > 0 ? g.spend / g.completeViews : 0;
+                else val = g.imps > 0 ? g.spend / g.imps * 1000 : 0;
+
+                const formatted = val > 0 ? '$' + (label === 'CPCV' ? val.toFixed(3) : val.toFixed(2)) : '--';
+                const desc = kpiDescriptions[label] || label;
+                blendedHtml += `<div class="kpi-card" title="Blended ${label} across partners optimizing toward ${label}">
+                    <div class="kpi-label">Blended ${label}</div>
+                    <div class="kpi-value">${formatted}</div>
+                    <div class="kpi-sub">${desc}</div>
+                </div>`;
+            });
+            document.getElementById('kpi-blended-container').innerHTML = blendedHtml;
 
             renderCharts(data);
             renderTable(data);
@@ -3050,14 +3111,97 @@
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 10, font: { size: 10 } } } }, cutout: '55%' }
             });
 
-            // CPM Chart
-            const cpmData = Object.entries(mediaTypes).map(([name, d]) => ({ name, cpm: d.imps > 0 ? d.spend / d.imps * 1000 : 0 })).sort((a, b) => a.cpm - b.cpm).slice(0, 6);
+            // KPI by Media Type Chart — build grouped data per KPI
+            // Inline KPI label resolver (mirrors getKPILabel in renderPerformanceSummary)
+            function resolveKPILabel(p) {
+                const kpi = (p.optimizingKPIs && p.optimizingKPIs[0]) || null;
+                if (kpi) {
+                    const kl = kpi.toLowerCase();
+                    if (kl.includes('viewable') && kl.includes('cpm')) return 'eCPM';
+                    if (kl === 'cpm') return 'CPM';
+                    if (kl === 'ecpm') return 'eCPM';
+                    if (kl === 'cpc') return 'CPC';
+                    if (kl === 'cpcv') return 'CPCV';
+                    if (kl === 'cple' || kl === 'cplpe') return 'CPLE';
+                    if (kl === 'cpa') return 'CPA';
+                    if (kl === 'dooh') return 'CPM';
+                    return kpi;
+                }
+                if (p.completeViews > 0 && p.spend > 0) return 'CPCV';
+                if (p.clicks > 0 && p.spend > 0 && (!p.impressions || p.clicks / p.impressions > 0.05)) return 'CPC';
+                if (p.viewableImpressions > 0 && p.spend > 0) return 'eCPM';
+                return 'eCPM';
+            }
+
+            // Group partners by their Optimized KPI, then by media type within each KPI
+            const kpiMediaGroups = {};
+            data.forEach(p => {
+                const kpi = resolveKPILabel(p);
+                if (!kpiMediaGroups[kpi]) kpiMediaGroups[kpi] = {};
+                if (!kpiMediaGroups[kpi][p.mediaType]) {
+                    kpiMediaGroups[kpi][p.mediaType] = { spend: 0, imps: 0, clicks: 0, completeViews: 0, viewableImps: 0 };
+                }
+                const g = kpiMediaGroups[kpi][p.mediaType];
+                g.spend += p.spend;
+                g.imps += p.impressions;
+                g.clicks += p.clicks || 0;
+                g.completeViews += p.completeViews || 0;
+                g.viewableImps += p.viewableImpressions || 0;
+            });
+            window._kpiMediaGroups = kpiMediaGroups;
+
+            // Populate the KPI toggle dropdown
+            const kpiToggle = document.getElementById('kpi-chart-toggle');
+            const kpiKeys = Object.keys(kpiMediaGroups);
+            kpiToggle.innerHTML = kpiKeys.map(k => `<option value="${k}">${k}</option>`).join('');
+
+            // Initial chart render
+            window.updateKpiChart = function() {
+                const selectedKpi = kpiToggle.value;
+                const group = window._kpiMediaGroups[selectedKpi] || {};
+
+                // Calculate the KPI metric value per media type
+                const chartData = Object.entries(group).map(([name, d]) => {
+                    let val = 0;
+                    if (selectedKpi === 'CPC') {
+                        val = d.clicks > 0 ? d.spend / d.clicks : 0;
+                    } else if (selectedKpi === 'CPCV') {
+                        val = d.completeViews > 0 ? d.spend / d.completeViews : 0;
+                    } else {
+                        // eCPM, CPM, and others use spend/impressions * 1000
+                        val = d.imps > 0 ? d.spend / d.imps * 1000 : 0;
+                    }
+                    return { name, val };
+                }).sort((a, b) => a.val - b.val).slice(0, 8);
+
+                const labels = chartData.map(d => d.name.substring(0, 12));
+                const values = chartData.map(d => d.val);
+                const colors = chartData.map(d => d.val < 10 ? '#059669' : d.val < 25 ? '#D97706' : '#DC2626');
+
+                if (charts.cpm) {
+                    charts.cpm.data.labels = labels;
+                    charts.cpm.data.datasets[0].data = values;
+                    charts.cpm.data.datasets[0].backgroundColor = colors;
+                    charts.cpm.update();
+                }
+            };
+
+            // Create initial chart with first KPI
+            const initKpi = kpiKeys[0] || 'eCPM';
+            const initGroup = kpiMediaGroups[initKpi] || {};
+            const initData = Object.entries(initGroup).map(([name, d]) => {
+                let val = 0;
+                if (initKpi === 'CPC') { val = d.clicks > 0 ? d.spend / d.clicks : 0; }
+                else if (initKpi === 'CPCV') { val = d.completeViews > 0 ? d.spend / d.completeViews : 0; }
+                else { val = d.imps > 0 ? d.spend / d.imps * 1000 : 0; }
+                return { name, val };
+            }).sort((a, b) => a.val - b.val).slice(0, 8);
 
             charts.cpm = new Chart(document.getElementById('cpm-chart'), {
                 type: 'bar',
                 data: {
-                    labels: cpmData.map(d => d.name.substring(0, 10)),
-                    datasets: [{ data: cpmData.map(d => d.cpm), backgroundColor: cpmData.map(d => d.cpm < 10 ? '#059669' : d.cpm < 25 ? '#D97706' : '#DC2626'), borderRadius: 4 }]
+                    labels: initData.map(d => d.name.substring(0, 12)),
+                    datasets: [{ data: initData.map(d => d.val), backgroundColor: initData.map(d => d.val < 10 ? '#059669' : d.val < 25 ? '#D97706' : '#DC2626'), borderRadius: 4 }]
                 },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { callback: v => '$' + v } } } }
             });
@@ -3728,27 +3872,36 @@
             }
 
             // Get the primary KPI label for a partner
+            // Groupings: Viewable eCPM → "eCPM", CPM → "CPM", eCPM/Other → "eCPM", CPC → "CPC"
             function getKPILabel(p) {
-                const kpi = (p.optimizingKPIs && p.optimizingKPIs[0]) || 'eCPM';
-                const kpiLower = kpi.toLowerCase();
-                if (kpiLower === 'ecpm' || kpiLower === 'cpm') return 'eCPM';
-                if (kpiLower.includes('viewable') && kpiLower.includes('cpm')) return 'Viewable eCPM';
-                if (kpiLower === 'cpc') return 'CPC';
-                if (kpiLower === 'cpcv') return 'CPCV';
-                if (kpiLower === 'cplpe' || kpiLower === 'cple') return 'CPLPE';
-                if (kpiLower === 'cpa') return 'CPA';
-                if (kpiLower === 'dooh') return 'eCPM';
-                return kpi;
+                const kpi = (p.optimizingKPIs && p.optimizingKPIs[0]) || null;
+                if (kpi) {
+                    const kpiLower = kpi.toLowerCase();
+                    if (kpiLower.includes('viewable') && kpiLower.includes('cpm')) return 'eCPM';
+                    if (kpiLower === 'cpm') return 'CPM';
+                    if (kpiLower === 'ecpm') return 'eCPM';
+                    if (kpiLower === 'cpc') return 'CPC';
+                    if (kpiLower === 'cpcv') return 'CPCV';
+                    if (kpiLower === 'cple' || kpiLower === 'cplpe') return 'CPLE';
+                    if (kpiLower === 'cpa') return 'CPA';
+                    if (kpiLower === 'dooh') return 'CPM';
+                    return kpi;
+                }
+                // No KPI parsed — infer from available metrics
+                if (p.completeViews > 0 && p.spend > 0) return 'CPCV';
+                if (p.clicks > 0 && p.spend > 0 && (!p.impressions || p.clicks / p.impressions > 0.05)) return 'CPC';
+                if (p.viewableImpressions > 0 && p.spend > 0) return 'eCPM';
+                return 'eCPM';
             }
 
             // Get the actual metric value for a partner based on their KPI
             function getKPIValue(p) {
                 const label = getKPILabel(p);
                 switch (label) {
-                    case 'Viewable eCPM': return p.viewableEcpm || 0;
+                    case 'eCPM': return p.viewableEcpm || p.cpm || p.ecpm || 0;
+                    case 'CPM': return p.cpm || p.ecpm || 0;
                     case 'CPC': return p.cpc || 0;
                     case 'CPCV': return p.cpcv || 0;
-                    case 'eCPM':
                     default: return p.cpm || p.ecpm || 0;
                 }
             }
@@ -3801,58 +3954,77 @@
                 const catTotalSpend = partners.reduce((s, p) => s + p.spend, 0);
                 const icon = catIcons[cat] || '📊';
 
-                html += `<div class="exec-summary-section">`;
-                html += `<h3 onclick="this.parentElement.classList.toggle('collapsed')">${icon} ${cat} <span class="cat-count">${partners.length} partner${partners.length > 1 ? 's' : ''} · ${formatCurrency(catTotalSpend)}</span><span class="cat-toggle">▼</span></h3>`;
-                html += `<div class="exec-table-wrap">`;
-                html += `<table class="exec-summary-table">`;
-                html += `<colgroup>
-                    <col class="col-partner">
-                    <col class="col-media">
-                    <col class="col-kpi">
-                    <col class="col-result">
-                    <col class="col-benchmark">
-                    <col class="col-variance">
-                </colgroup>`;
-                html += `<thead><tr>`;
-                html += `<th>Partner</th>`;
-                html += `<th>Media Type</th>`;
-                html += `<th>Optimized KPI</th>`;
-                html += `<th class="col-right">Result</th>`;
-                html += `<th class="col-right">Benchmark</th>`;
-                html += `<th class="col-right">Variance</th>`;
-                html += `</tr></thead><tbody>`;
-
+                // Sub-group partners by Optimized KPI
+                const kpiGroups = {};
+                const kpiOrder = [];
                 partners.forEach(p => {
                     const kpiLabel = getKPILabel(p);
-                    const kpiValue = getKPIValue(p);
-                    const benchmarkData = getBenchmarkForMediaType(p.mediaType);
-
-                    const resultDisplay = formatKPIValue(kpiValue, kpiLabel);
-                    const benchmarkDisplay = benchmarkData && benchmarkData.cpm !== null && benchmarkData.cpm !== undefined
-                        ? formatKPIValue(benchmarkData.cpm, kpiLabel)
-                        : '<span style="color:var(--gray-400);">--</span>';
-
-                    // Calculate variance
-                    let varianceHtml = '<span class="variance-pill neutral">--</span>';
-                    if (benchmarkData && benchmarkData.cpm !== null && benchmarkData.cpm !== undefined && kpiValue > 0) {
-                        const variancePct = ((kpiValue - benchmarkData.cpm) / benchmarkData.cpm) * 100;
-                        const sign = variancePct > 0 ? '+' : '';
-                        const pillClass = variancePct < -0.5 ? 'good' : variancePct > 0.5 ? 'bad' : 'neutral';
-                        varianceHtml = `<span class="variance-pill ${pillClass}">${sign}${variancePct.toFixed(1)}%</span>`;
+                    if (!kpiGroups[kpiLabel]) {
+                        kpiGroups[kpiLabel] = [];
+                        kpiOrder.push(kpiLabel);
                     }
-
-                    html += `<tr>`;
-                    html += `<td>${p.partner}</td>`;
-                    html += `<td><span class="media-type-badge">${p.mediaType}</span></td>`;
-                    html += `<td><span class="kpi-badge">${kpiLabel}</span></td>`;
-                    html += `<td class="td-result">${resultDisplay}</td>`;
-                    html += `<td class="td-benchmark">${benchmarkDisplay}</td>`;
-                    html += `<td class="td-variance">${varianceHtml}</td>`;
-                    html += `</tr>`;
+                    kpiGroups[kpiLabel].push(p);
                 });
 
-                html += `</tbody></table>`;
-                html += `</div></div>`;
+                html += `<div class="exec-summary-section">`;
+                html += `<h3 onclick="this.parentElement.classList.toggle('collapsed')">${icon} ${cat} <span class="cat-count">${partners.length} partner${partners.length > 1 ? 's' : ''} · ${formatCurrency(catTotalSpend)}</span><span class="cat-toggle">▼</span></h3>`;
+
+                // Render a separate table for each KPI sub-group
+                kpiOrder.forEach(kpiLabel => {
+                    const kpiPartners = kpiGroups[kpiLabel];
+
+                    html += `<div class="exec-table-wrap">`;
+                    html += `<table class="exec-summary-table">`;
+                    html += `<colgroup>
+                        <col class="col-partner">
+                        <col class="col-media">
+                        <col class="col-kpi">
+                        <col class="col-result">
+                        <col class="col-benchmark">
+                        <col class="col-variance">
+                    </colgroup>`;
+                    html += `<thead><tr>`;
+                    html += `<th>Partner</th>`;
+                    html += `<th>Media Type</th>`;
+                    html += `<th>Optimized KPI</th>`;
+                    html += `<th class="col-right">Result</th>`;
+                    html += `<th class="col-right">Benchmark</th>`;
+                    html += `<th class="col-right">Variance</th>`;
+                    html += `</tr></thead><tbody>`;
+
+                    kpiPartners.forEach(p => {
+                        const kpiValue = getKPIValue(p);
+                        const benchmarkData = getBenchmarkForMediaType(p.mediaType);
+
+                        const resultDisplay = formatKPIValue(kpiValue, kpiLabel);
+                        const benchmarkDisplay = benchmarkData && benchmarkData.cpm !== null && benchmarkData.cpm !== undefined
+                            ? formatKPIValue(benchmarkData.cpm, kpiLabel)
+                            : '<span style="color:var(--gray-400);">--</span>';
+
+                        // Calculate variance
+                        let varianceHtml = '<span class="variance-pill neutral">--</span>';
+                        if (benchmarkData && benchmarkData.cpm !== null && benchmarkData.cpm !== undefined && kpiValue > 0) {
+                            const variancePct = ((kpiValue - benchmarkData.cpm) / benchmarkData.cpm) * 100;
+                            const sign = variancePct > 0 ? '+' : '';
+                            const pillClass = variancePct < -0.5 ? 'good' : variancePct > 0.5 ? 'bad' : 'neutral';
+                            varianceHtml = `<span class="variance-pill ${pillClass}">${sign}${variancePct.toFixed(1)}%</span>`;
+                        }
+
+                        html += `<tr>`;
+                        html += `<td>${p.partner}</td>`;
+                        html += `<td><span class="media-type-badge">${p.mediaType}</span></td>`;
+                        html += `<td><span class="kpi-badge">${kpiLabel}</span></td>`;
+                        html += `<td class="td-result">${resultDisplay}</td>`;
+                        html += `<td class="td-benchmark">${benchmarkDisplay}</td>`;
+                        html += `<td class="td-variance">${varianceHtml}</td>`;
+                        html += `</tr>`;
+                    });
+
+                    html += `</tbody></table>`;
+                    html += `</div>`;
+                });
+
+                html += `</div>`;
             });
 
             container.innerHTML = html;
@@ -5801,13 +5973,18 @@
                 pdf.setFont('helvetica', 'bold');
                 pdf.text('Key Performance Indicators', margin + halfWidth + 4, tableStartY);
                 
+                const kpiCards = document.querySelectorAll('#kpi-blended-container .kpi-card');
                 const kpiData = [
                     ['Metric', 'Value'],
                     ['Investment', document.getElementById('kpi-spend')?.textContent || '$0'],
                     ['Impressions', document.getElementById('kpi-imps')?.textContent || '0'],
-                    ['Blended CPM', document.getElementById('kpi-cpm')?.textContent || '$0'],
-                    ['Partners', document.getElementById('kpi-partners')?.textContent || '0']
                 ];
+                kpiCards.forEach(card => {
+                    const label = card.querySelector('.kpi-label')?.textContent || '';
+                    const value = card.querySelector('.kpi-value')?.textContent || '$0';
+                    kpiData.push([label, value]);
+                });
+                kpiData.push(['Partners', document.getElementById('kpi-partners')?.textContent || '0']);
                 
                 pdf.autoTable({
                     startY: tableStartY + 2,
