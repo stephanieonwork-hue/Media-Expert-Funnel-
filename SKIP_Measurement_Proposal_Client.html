@@ -1,0 +1,1480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SKIP | OOH Measurement Proposal</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --orange: #E84E0E;
+    --orange-light: #FFF3ED;
+    --orange-glow: rgba(232, 78, 14, 0.08);
+    --dark: #1a1a1a;
+    --text: #2d2d2d;
+    --med: #5a5a5a;
+    --light: #8c8c8c;
+    --subtle: #bbbbbb;
+    --border: #e5e5e5;
+    --bg: #fafafa;
+    --white: #ffffff;
+    --card-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --card-shadow-hover: 0 4px 12px rgba(0,0,0,0.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── STICKY NAV ── */
+  .sticky-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: rgba(26,26,26,0.95);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    height: 44px;
+    gap: 4px;
+    transform: translateY(-100%);
+    transition: transform 0.3s ease;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .sticky-nav.visible { transform: translateY(0); }
+
+  .sticky-nav .nav-brand {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--orange);
+    letter-spacing: 2px;
+    margin-right: 12px;
+    flex-shrink: 0;
+  }
+
+  .sticky-nav a {
+    font-size: 11px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.55);
+    text-decoration: none;
+    padding: 6px 10px;
+    border-radius: 6px;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+    flex-shrink: 0;
+  }
+
+  .sticky-nav a:hover {
+    color: rgba(255,255,255,0.9);
+    background: rgba(255,255,255,0.08);
+  }
+
+  .sticky-nav a.active {
+    color: var(--orange);
+    background: rgba(232,78,14,0.12);
+  }
+
+  /* ── TITLE PAGE ── */
+  .title-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #1a1a1a;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .title-bg-image {
+    position: absolute;
+    inset: 0;
+    background: url('skip-the-dishes-winnipeg-011.webp') center center / cover no-repeat;
+    opacity: 0;
+    animation: heroImageFade 2s ease-out 0.3s both;
+  }
+
+  .title-bg-image::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(26,26,26,0.82) 0%, rgba(26,26,26,0.65) 50%, rgba(26,26,26,0.82) 100%);
+  }
+
+  .title-page::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(232,78,14,0.15) 0%, transparent 70%);
+    border-radius: 50%;
+    z-index: 1;
+  }
+
+  .title-page::after {
+    content: '';
+    position: absolute;
+    bottom: -30%;
+    left: -10%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(232,78,14,0.08) 0%, transparent 70%);
+    border-radius: 50%;
+    z-index: 1;
+  }
+
+  .title-content {
+    text-align: center;
+    position: relative;
+    z-index: 2;
+  }
+
+  .title-bar {
+    width: 60px;
+    height: 3px;
+    background: var(--orange);
+    margin: 0 auto 40px;
+  }
+
+  .title-brand {
+    font-size: 72px;
+    font-weight: 700;
+    color: var(--orange);
+    letter-spacing: 8px;
+    margin-bottom: 12px;
+  }
+
+  .title-sub {
+    font-size: 22px;
+    font-weight: 300;
+    color: rgba(255,255,255,0.85);
+    letter-spacing: 2px;
+    margin-bottom: 48px;
+  }
+
+  .title-bar-bottom {
+    width: 60px;
+    height: 3px;
+    background: var(--orange);
+    margin: 0 auto 40px;
+  }
+
+  .title-meta {
+    font-size: 13px;
+    color: rgba(255,255,255,0.45);
+    letter-spacing: 1px;
+  }
+
+  .title-meta span {
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  /* ── MAIN CONTENT ── */
+  .content {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 60px 40px 80px;
+  }
+
+  /* ── SECTIONS ── */
+  .section {
+    margin-bottom: 44px;
+    scroll-margin-top: 56px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 18px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--orange);
+  }
+
+  .section-number {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--orange);
+    background: var(--orange-light);
+    padding: 3px 10px;
+    border-radius: 12px;
+    letter-spacing: 1px;
+  }
+
+  .section-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--dark);
+  }
+
+  h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin: 20px 0 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  p {
+    margin-bottom: 10px;
+    color: var(--text);
+  }
+
+  .muted { color: var(--med); }
+  .small { font-size: 13px; }
+
+  /* ── LISTS ── */
+  ul {
+    margin: 8px 0 12px 0;
+    padding-left: 0;
+    list-style: none;
+  }
+
+  ul li {
+    position: relative;
+    padding-left: 20px;
+    margin-bottom: 5px;
+    font-size: 14px;
+  }
+
+  ul li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 9px;
+    width: 6px;
+    height: 6px;
+    background: var(--orange);
+    border-radius: 50%;
+  }
+
+  ul.muted-list li { color: var(--med); font-size: 13px; }
+  ul.muted-list li::before { background: var(--subtle); }
+
+  /* ── BOLD ITEMS ── */
+  .bold-item {
+    margin-bottom: 6px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .bold-item strong {
+    color: var(--dark);
+  }
+
+  .bold-item span {
+    color: var(--med);
+  }
+
+  /* ── TABLES ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 13px;
+  }
+
+  thead th {
+    background: var(--orange);
+    color: var(--white);
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 10px 14px;
+    text-align: left;
+    border: none;
+  }
+
+  thead th:first-child { border-radius: 6px 0 0 0; }
+  thead th:last-child { border-radius: 0 6px 0 0; }
+
+  tbody td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  tbody tr:nth-child(even) { background: var(--orange-light); }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:last-child td:first-child { border-radius: 0 0 0 6px; }
+  tbody tr:last-child td:last-child { border-radius: 0 0 6px 0; }
+
+  .td-bold { font-weight: 600; color: var(--dark); }
+  .td-orange { font-weight: 700; color: var(--orange); }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--white);
+    border-radius: 8px;
+    padding: 20px 24px;
+    box-shadow: var(--card-shadow);
+    margin: 12px 0;
+    border-left: 3px solid var(--orange);
+  }
+
+  .card-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--orange);
+    margin-bottom: 6px;
+  }
+
+  .card p {
+    font-size: 14px;
+    margin-bottom: 0;
+    color: var(--text);
+  }
+
+  /* ── STAT GRID ── */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin: 14px 0;
+  }
+
+  .stat-box {
+    background: var(--white);
+    border-radius: 8px;
+    padding: 18px 16px;
+    text-align: center;
+    box-shadow: var(--card-shadow);
+    border-top: 3px solid var(--orange);
+  }
+
+  .stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--orange);
+    line-height: 1.2;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--light);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+  }
+
+  .stat-sub {
+    font-size: 11px;
+    color: var(--subtle);
+    margin-top: 2px;
+  }
+
+  /* ── TIMELINE ── */
+  .timeline {
+    position: relative;
+    margin: 16px 0;
+    padding-left: 28px;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 4px;
+    bottom: 4px;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--orange), var(--orange-light));
+  }
+
+  .tl-item {
+    position: relative;
+    margin-bottom: 16px;
+    padding-left: 16px;
+  }
+
+  .tl-item::before {
+    content: '';
+    position: absolute;
+    left: -24px;
+    top: 6px;
+    width: 10px;
+    height: 10px;
+    background: var(--orange);
+    border-radius: 50%;
+    border: 2px solid var(--white);
+    box-shadow: 0 0 0 2px var(--orange);
+  }
+
+  .tl-phase {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--dark);
+  }
+
+  .tl-dur {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--orange);
+    margin-left: 8px;
+  }
+
+  .tl-desc {
+    font-size: 13px;
+    color: var(--med);
+    margin-top: 2px;
+  }
+
+  /* ── NOTE ── */
+  .note {
+    font-size: 12px;
+    color: var(--subtle);
+    font-style: italic;
+    margin-top: 8px;
+  }
+
+  /* ── FOOTER ── */
+  .footer {
+    text-align: center;
+    padding: 30px 0;
+    border-top: 2px solid var(--orange);
+    margin-top: 20px;
+    font-size: 12px;
+    color: var(--light);
+    letter-spacing: 0.5px;
+  }
+
+  /* ── CHART SECTION ── */
+  .chart-container {
+    background: var(--white);
+    border-radius: 10px;
+    padding: 24px;
+    box-shadow: var(--card-shadow);
+    margin: 16px 0;
+  }
+
+  .chart-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--dark);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+    text-align: center;
+  }
+
+  .chart-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin: 16px 0;
+  }
+
+  .chart-annotation {
+    font-size: 11px;
+    color: var(--light);
+    text-align: center;
+    margin-top: 6px;
+  }
+
+  .vs-badge {
+    display: inline-block;
+    background: #fee2e2;
+    color: #dc2626;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 10px;
+    letter-spacing: 0.5px;
+  }
+
+  .pass-badge {
+    display: inline-block;
+    background: #dcfce7;
+    color: #16a34a;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 10px;
+    letter-spacing: 0.5px;
+  }
+
+  .comparison-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 16px 0;
+  }
+
+  .comparison-card {
+    background: var(--white);
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: var(--card-shadow);
+  }
+
+  .comparison-card.fail {
+    border-top: 3px solid #dc2626;
+  }
+
+  .comparison-card.pass {
+    border-top: 3px solid #16a34a;
+  }
+
+  .comparison-card h4 {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+
+  .comparison-card.fail h4 { color: #dc2626; }
+  .comparison-card.pass h4 { color: #16a34a; }
+
+  .metric-bar {
+    margin-bottom: 10px;
+  }
+
+  .metric-bar-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--med);
+    margin-bottom: 3px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .metric-bar-track {
+    height: 8px;
+    background: var(--bg);
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+    gap: 2px;
+  }
+
+  .metric-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s;
+  }
+
+  .legend-inline {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin: 8px 0 4px;
+    font-size: 11px;
+    color: var(--med);
+  }
+
+  .legend-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+
+  .callout-box {
+    background: linear-gradient(135deg, #fef3c7 0%, #fef9c3 100%);
+    border-left: 3px solid #f59e0b;
+    border-radius: 6px;
+    padding: 14px 18px;
+    margin: 14px 0;
+    font-size: 13px;
+    color: #92400e;
+  }
+
+  .callout-box strong { color: #78350f; }
+
+  /* ── SCROLL PROGRESS BAR ── */
+  .scroll-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--orange), #f97316, #fbbf24);
+    z-index: 101;
+    width: 0%;
+    transition: width 0.1s linear;
+  }
+
+  /* ── ANIMATED TITLE PAGE ── */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes expandBar {
+    from { width: 0; }
+    to { width: 60px; }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.15; transform: scale(1); }
+    50% { opacity: 0.25; transform: scale(1.05); }
+  }
+
+  @keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  @keyframes heroImageFade {
+    from { opacity: 0; transform: scale(1.08); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  @keyframes heroImageSlow {
+    0% { transform: scale(1); }
+    100% { transform: scale(1.05); }
+  }
+
+  .title-bg-image {
+    animation: heroImageFade 2s ease-out 0.3s both;
+  }
+
+  .title-bg-image.loaded {
+    animation: heroImageFade 2s ease-out 0.3s both, heroImageSlow 20s ease-in-out 2.3s infinite alternate;
+  }
+
+  .title-page::before {
+    animation: pulse 4s ease-in-out infinite;
+  }
+
+  .title-page::after {
+    animation: pulse 5s ease-in-out infinite 1s;
+  }
+
+  .title-bar {
+    animation: expandBar 0.8s ease-out 0.2s both;
+  }
+
+  .title-brand {
+    animation: fadeInUp 0.8s ease-out 0.4s both;
+  }
+
+  .title-sub {
+    animation: fadeInUp 0.8s ease-out 0.6s both;
+  }
+
+  .title-bar-bottom {
+    animation: expandBar 0.8s ease-out 0.8s both;
+  }
+
+  .title-meta {
+    animation: fadeIn 1s ease-out 1s both;
+  }
+
+  /* Floating particles on title page */
+  .particle {
+    position: absolute;
+    border-radius: 50%;
+    background: var(--orange);
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .particle-1 { width: 4px; height: 4px; top: 20%; left: 15%; opacity: 0.2; animation: float 6s ease-in-out infinite; }
+  .particle-2 { width: 6px; height: 6px; top: 60%; left: 80%; opacity: 0.12; animation: float 8s ease-in-out infinite 1s; }
+  .particle-3 { width: 3px; height: 3px; top: 35%; left: 70%; opacity: 0.18; animation: float 7s ease-in-out infinite 2s; }
+  .particle-4 { width: 5px; height: 5px; top: 75%; left: 25%; opacity: 0.1; animation: float 9s ease-in-out infinite 0.5s; }
+  .particle-5 { width: 4px; height: 4px; top: 15%; left: 55%; opacity: 0.15; animation: float 5s ease-in-out infinite 3s; }
+  .particle-6 { width: 8px; height: 8px; top: 80%; left: 60%; opacity: 0.06; animation: float 10s ease-in-out infinite 2s; }
+  .particle-7 { width: 3px; height: 3px; top: 45%; left: 90%; opacity: 0.2; animation: float 6s ease-in-out infinite 4s; }
+  .particle-8 { width: 5px; height: 5px; top: 10%; left: 40%; opacity: 0.1; animation: float 7s ease-in-out infinite 1.5s; }
+
+  /* ── SCROLL REVEAL ── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .reveal-left {
+    opacity: 0;
+    transform: translateX(-24px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+  }
+
+  .reveal-left.visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .reveal-right {
+    opacity: 0;
+    transform: translateX(24px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+  }
+
+  .reveal-right.visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .reveal-scale {
+    opacity: 0;
+    transform: scale(0.92);
+    transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+  }
+
+  .reveal-scale.visible {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  /* Staggered delays for grid children */
+  .stagger-1 { transition-delay: 0.1s; }
+  .stagger-2 { transition-delay: 0.2s; }
+  .stagger-3 { transition-delay: 0.3s; }
+
+  /* ── HOVER EFFECTS ── */
+  .stat-box {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+
+  .stat-box:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--card-shadow-hover);
+  }
+
+  .card {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--card-shadow-hover);
+  }
+
+  .comparison-card {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+
+  .comparison-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--card-shadow-hover);
+  }
+
+  .chart-container {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+
+  .chart-container:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--card-shadow-hover);
+  }
+
+  tbody tr {
+    transition: background 0.2s ease;
+  }
+
+  tbody tr:hover {
+    background: var(--orange-light) !important;
+  }
+
+  /* ── SVG LINE DRAW ── */
+  .draw-line {
+    stroke-dasharray: 1000;
+    stroke-dashoffset: 1000;
+    transition: stroke-dashoffset 1.5s ease-out;
+  }
+
+  .draw-line.animated {
+    stroke-dashoffset: 0;
+  }
+
+  /* ── ANIMATED STAT VALUE ── */
+  .stat-value {
+    transition: color 0.3s;
+  }
+
+  .stat-box:hover .stat-value {
+    color: var(--dark);
+  }
+
+  /* ── SECTION HEADER UNDERLINE ANIMATION ── */
+  .section-header {
+    position: relative;
+    border-bottom: 2px solid transparent;
+  }
+
+  .section-header::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: var(--orange);
+    transition: width 0.6s ease-out;
+  }
+
+  .section-header.animate-line::after {
+    width: 100%;
+  }
+
+  /* ── TIMELINE DOT PULSE ── */
+  @keyframes dotPulse {
+    0% { box-shadow: 0 0 0 2px var(--orange); }
+    50% { box-shadow: 0 0 0 2px var(--orange), 0 0 0 6px rgba(232,78,14,0.2); }
+    100% { box-shadow: 0 0 0 2px var(--orange); }
+  }
+
+  .tl-item.visible::before {
+    animation: dotPulse 2s ease-in-out infinite;
+  }
+
+  /* ── SCROLL DOWN INDICATOR ── */
+  .scroll-indicator {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    animation: fadeIn 1s ease-out 1.5s both;
+  }
+
+  @keyframes scrollBounce {
+    0%, 100% { transform: translateY(0); opacity: 0.6; }
+    50% { transform: translateY(8px); opacity: 1; }
+  }
+
+  .scroll-indicator svg {
+    animation: scrollBounce 2s ease-in-out infinite;
+  }
+
+  /* ── PRINT ── */
+  @media print {
+    .title-page { min-height: auto; padding: 120px 0; page-break-after: always; }
+    .content { padding: 20px 0; }
+    .section { page-break-inside: avoid; }
+    .stat-box, .card { box-shadow: none; border: 1px solid var(--border); }
+    body { background: white; }
+    .sticky-nav, .scroll-progress, .scroll-indicator, .particle { display: none !important; }
+    .section { scroll-margin-top: 0; }
+    .reveal, .reveal-left, .reveal-right, .reveal-scale { opacity: 1 !important; transform: none !important; }
+    .draw-line { stroke-dashoffset: 0 !important; }
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ════ SCROLL PROGRESS ════ -->
+<div class="scroll-progress" id="scrollProgress"></div>
+
+<!-- ════ STICKY NAV ════ -->
+<nav class="sticky-nav" id="stickyNav">
+  <span class="nav-brand">SKIP</span>
+  <a href="#sec-objective">Objective</a>
+  <a href="#sec-deliver">Deliverables</a>
+  <a href="#sec-how">How It Works</a>
+  <a href="#sec-markets">Market Selection</a>
+  <a href="#sec-case">Case Study</a>
+  <a href="#sec-measure">Measurement</a>
+  <a href="#sec-timeline">Timeline</a>
+  <a href="#sec-data">What We Need</a>
+  <a href="#sec-next">Next Steps</a>
+</nav>
+
+<!-- ════ TITLE PAGE ════ -->
+<div class="title-page">
+  <div class="title-bg-image" id="heroBg"></div>
+  <div class="particle particle-1"></div>
+  <div class="particle particle-2"></div>
+  <div class="particle particle-3"></div>
+  <div class="particle particle-4"></div>
+  <div class="particle particle-5"></div>
+  <div class="particle particle-6"></div>
+  <div class="particle particle-7"></div>
+  <div class="particle particle-8"></div>
+  <div class="title-content">
+    <div class="title-bar"></div>
+    <div class="title-brand">SKIP</div>
+    <div class="title-sub">Proving the Power of OOH</div>
+    <div class="title-bar-bottom"></div>
+    <div class="title-meta">
+      <span>Omnicom Media Canada &nbsp;|&nbsp; Growth Analytics</span>
+      <span>March 2026</span>
+    </div>
+  </div>
+  <div class="scroll-indicator">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+  </div>
+</div>
+
+<!-- ════ CONTENT ════ -->
+<div class="content">
+
+  <!-- OBJECTIVE -->
+  <div class="section reveal" id="sec-objective">
+    <div class="section-header">
+      <span class="section-number">01</span>
+      <span class="section-title">Objective</span>
+    </div>
+    <p>SKIP is making a significant investment in Out-of-Home. The right question isn&#8217;t <em>whether</em> to invest &#8212; it&#8217;s <strong>how much is that investment actually delivering?</strong></p>
+    <p>This study gives SKIP something most brands don&#8217;t have: a clear, evidence-based read on what OOH is doing at every stage of the customer journey.</p>
+    <ul>
+      <li><strong>Top-of-Mind Awareness</strong> &#8212; When people think &#8220;food delivery,&#8221; is SKIP coming to mind first?</li>
+      <li><strong>Aided &amp; Spontaneous Awareness</strong> &#8212; Is SKIP&#8217;s visibility growing in markets where OOH is running?</li>
+      <li><strong>Consideration</strong> &#8212; Are more people actively thinking about ordering from SKIP?</li>
+      <li><strong>Conversion</strong> &#8212; Is OOH translating into real orders and promo code usage?</li>
+    </ul>
+    <p class="muted">With these answers, SKIP can invest with precision &#8212; doubling down where OOH is working and reallocating where it isn&#8217;t.</p>
+  </div>
+
+  <!-- WHAT WE WILL DELIVER -->
+  <div class="section reveal" id="sec-deliver">
+    <div class="section-header">
+      <span class="section-number">02</span>
+      <span class="section-title">What We Will Deliver</span>
+    </div>
+    <p>By the end of this study, SKIP will have three things that turn OOH from an assumption into a strategy:</p>
+    <div class="bold-item"><strong>A Purpose-Built Study Design</strong> <span>&#8212; Markets, timing, and data sources selected specifically around SKIP&#8217;s OOH footprint and campaign calendar. No off-the-shelf framework.</span></div>
+    <div class="bold-item"><strong>Full-Funnel Impact Analysis</strong> <span>&#8212; A clear before-and-after comparison isolating what OOH is actually driving, from the moment someone recognizes the brand to the moment they place an order.</span></div>
+    <div class="bold-item"><strong>An Actionable Playbook</strong> <span>&#8212; Not just data, but findings SKIP can act on: where OOH is over-performing, where there&#8217;s room to optimize, and what the next move should be.</span></div>
+
+    <h3>Additional Context</h3>
+    <ul class="muted-list">
+      <li>Creative evaluation will be covered separately by Global Insights via the Neurons platform</li>
+      <li>Survey fielding and data collection are managed independently</li>
+      <li>These findings become the foundation for SKIP&#8217;s evolving OOH playbook &#8212; each campaign cycle builds on the last</li>
+    </ul>
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <div class="section reveal" id="sec-how">
+    <div class="section-header">
+      <span class="section-number">03</span>
+      <span class="section-title">How It Works</span>
+    </div>
+    <p>The idea is straightforward: we look at what happens in markets <em>with</em> OOH versus a market <em>without</em> it, and measure how each changes over time. Because we&#8217;re tracking the same markets before and after the campaign, we can strip away noise like seasonality, promotions, or other media &#8212; and isolate what OOH alone is contributing to SKIP&#8217;s results.</p>
+    <p>This approach is called <strong>Difference-in-Differences (DiD)</strong>, and it&#8217;s the same method leading brands across CPG, retail, and QSR use to make confident media investment decisions.</p>
+
+    <h3>Test Design</h3>
+    <table>
+      <thead><tr><th></th><th>Markets</th><th>OOH Status</th></tr></thead>
+      <tbody>
+        <tr><td class="td-bold">With OOH</td><td>Calgary, Winnipeg, Regina</td><td>OOH campaign runs as planned (March)</td></tr>
+        <tr><td class="td-bold">Without OOH</td><td>Edmonton</td><td>No OOH for 8 weeks &#8212; acts as baseline</td></tr>
+      </tbody>
+    </table>
+    <p class="muted small">All four markets share 12+ months of brand tracker history, similar demographics, and comparable media landscapes &#8212; giving SKIP the cleanest possible read on OOH&#8217;s true impact.</p>
+  </div>
+
+  <!-- WHY THESE MARKETS -->
+  <div class="section reveal" id="sec-markets">
+    <div class="section-header">
+      <span class="section-number">04</span>
+      <span class="section-title">Why Prairie Markets (Not Toronto vs. Vancouver)</span>
+    </div>
+    <p>The quality of the answer depends entirely on the quality of the comparison. For SKIP to trust the results, the markets we compare need to be <strong>moving in the same direction before the campaign starts</strong>. Otherwise, any post-campaign difference could just be noise &#8212; and SKIP would be making decisions on unreliable data.</p>
+
+    <!-- PARALLEL TRENDS EXPLAINER -->
+    <div class="chart-row">
+      <div class="chart-container">
+        <div class="chart-title"><span class="vs-badge">FAIL</span> &nbsp;Toronto vs. Vancouver</div>
+        <svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg" style="width:100%;">
+          <!-- Grid -->
+          <line x1="40" y1="20" x2="40" y2="145" stroke="#e5e5e5" stroke-width="1"/>
+          <line x1="40" y1="145" x2="300" y2="145" stroke="#e5e5e5" stroke-width="1"/>
+          <line x1="40" y1="105" x2="300" y2="105" stroke="#f3f3f3" stroke-width="1" stroke-dasharray="3,3"/>
+          <line x1="40" y1="65" x2="300" y2="65" stroke="#f3f3f3" stroke-width="1" stroke-dasharray="3,3"/>
+          <!-- Y labels -->
+          <text x="36" y="148" font-size="9" fill="#999" text-anchor="end">Low</text>
+          <text x="36" y="68" font-size="9" fill="#999" text-anchor="end">High</text>
+          <!-- X labels -->
+          <text x="80" y="160" font-size="8" fill="#999" text-anchor="middle">Q1</text>
+          <text x="140" y="160" font-size="8" fill="#999" text-anchor="middle">Q2</text>
+          <text x="200" y="160" font-size="8" fill="#999" text-anchor="middle">Q3</text>
+          <text x="260" y="160" font-size="8" fill="#999" text-anchor="middle">Q4</text>
+          <!-- Campaign line -->
+          <line x1="200" y1="20" x2="200" y2="145" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.6"/>
+          <text x="204" y="30" font-size="8" fill="#f59e0b" font-weight="600">OOH Start</text>
+          <!-- Toronto line (high, steep up) -->
+          <polyline class="draw-line" points="60,110 100,95 140,82 180,72 200,65 240,50 280,38" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round"/>
+          <!-- Vancouver line (flatter, different slope) -->
+          <polyline class="draw-line" points="60,120 100,118 140,115 180,113 200,112 240,105 280,100" fill="none" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round"/>
+          <!-- Gap annotation -->
+          <line x1="285" y1="38" x2="285" y2="100" stroke="#999" stroke-width="1" stroke-dasharray="2,2"/>
+          <text x="295" y="55" font-size="8" fill="#dc2626" font-weight="600">Gap &#8800;</text>
+          <text x="295" y="65" font-size="8" fill="#dc2626" font-weight="600">OOH?</text>
+          <!-- Labels on lines -->
+          <text x="64" y="107" font-size="8" fill="#2563eb" font-weight="600">Toronto</text>
+          <text x="64" y="132" font-size="8" fill="#dc2626" font-weight="600">Vancouver</text>
+        </svg>
+        <div class="chart-annotation">Trends diverge <em>before</em> the campaign &#8594; invalid comparison</div>
+      </div>
+
+      <div class="chart-container">
+        <div class="chart-title"><span class="pass-badge">PASS</span> &nbsp;Prairie Markets (Recommended)</div>
+        <svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg" style="width:100%;">
+          <!-- Grid -->
+          <line x1="40" y1="20" x2="40" y2="145" stroke="#e5e5e5" stroke-width="1"/>
+          <line x1="40" y1="145" x2="300" y2="145" stroke="#e5e5e5" stroke-width="1"/>
+          <line x1="40" y1="105" x2="300" y2="105" stroke="#f3f3f3" stroke-width="1" stroke-dasharray="3,3"/>
+          <line x1="40" y1="65" x2="300" y2="65" stroke="#f3f3f3" stroke-width="1" stroke-dasharray="3,3"/>
+          <!-- Y labels -->
+          <text x="36" y="148" font-size="9" fill="#999" text-anchor="end">Low</text>
+          <text x="36" y="68" font-size="9" fill="#999" text-anchor="end">High</text>
+          <!-- X labels -->
+          <text x="80" y="160" font-size="8" fill="#999" text-anchor="middle">Q1</text>
+          <text x="140" y="160" font-size="8" fill="#999" text-anchor="middle">Q2</text>
+          <text x="200" y="160" font-size="8" fill="#999" text-anchor="middle">Q3</text>
+          <text x="260" y="160" font-size="8" fill="#999" text-anchor="middle">Q4</text>
+          <!-- Campaign line -->
+          <line x1="200" y1="20" x2="200" y2="145" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.6"/>
+          <text x="204" y="30" font-size="8" fill="#f59e0b" font-weight="600">OOH Start</text>
+          <!-- Test markets (Calgary/Winnipeg/Regina) - parallel then lift -->
+          <polyline class="draw-line" points="60,105 100,100 140,95 180,90 200,87 240,68 280,55" fill="none" stroke="#E84E0E" stroke-width="2.5" stroke-linecap="round"/>
+          <!-- Control (Edmonton) - parallel, stays flat after -->
+          <polyline class="draw-line" points="60,112 100,107 140,102 180,97 200,94 240,90 280,86" fill="none" stroke="#6b7280" stroke-width="2.5" stroke-linecap="round"/>
+          <!-- Lift annotation -->
+          <line x1="275" y1="55" x2="275" y2="86" stroke="#16a34a" stroke-width="1.5"/>
+          <polygon points="275,58 272,64 278,64" fill="#16a34a"/>
+          <polygon points="275,83 272,77 278,77" fill="#16a34a"/>
+          <text x="283" y="70" font-size="8" fill="#16a34a" font-weight="700">OOH</text>
+          <text x="283" y="79" font-size="8" fill="#16a34a" font-weight="700">Lift</text>
+          <!-- Labels -->
+          <text x="64" y="117" font-size="8" fill="#E84E0E" font-weight="600">Test (Cal/Win/Reg)</text>
+          <text x="64" y="128" font-size="8" fill="#6b7280" font-weight="600">Control (Edmonton)</text>
+        </svg>
+        <div class="chart-annotation">Parallel pre-trends &#8594; post-campaign gap = true OOH effect</div>
+      </div>
+    </div>
+
+    <div class="callout-box">
+      <strong>Why this matters:</strong> If the markets aren&#8217;t in sync <em>before</em> the campaign, any difference we see <em>after</em> could just be a continuation of what was already happening &#8212; not the effect of OOH. Matching markets upfront is what makes the results trustworthy.
+    </div>
+
+    <!-- MARKET COMPARISON -->
+    <h3>Why Toronto &amp; Vancouver Don&#8217;t Match</h3>
+    <div class="comparison-grid">
+      <div class="comparison-card fail reveal-left">
+        <h4>Toronto vs. Vancouver</h4>
+        <div class="metric-bar">
+          <div class="metric-bar-label"><span>Population</span></div>
+          <div class="metric-bar-track">
+            <div class="metric-bar-fill" style="width:85%;background:#2563eb;" title="Toronto ~6.5M"></div>
+            <div class="metric-bar-fill" style="width:34%;background:#dc2626;" title="Vancouver ~2.6M"></div>
+          </div>
+          <div class="metric-bar-label" style="margin-top:2px;"><span style="color:#2563eb;">Toronto 6.5M</span><span style="color:#dc2626;">Vancouver 2.6M</span></div>
+        </div>
+        <div class="metric-bar">
+          <div class="metric-bar-label"><span>Avg. Home Price Index</span></div>
+          <div class="metric-bar-track">
+            <div class="metric-bar-fill" style="width:70%;background:#2563eb;"></div>
+            <div class="metric-bar-fill" style="width:88%;background:#dc2626;"></div>
+          </div>
+          <div class="metric-bar-label" style="margin-top:2px;"><span style="color:#2563eb;">$1.1M</span><span style="color:#dc2626;">$1.3M</span></div>
+        </div>
+        <div class="metric-bar">
+          <div class="metric-bar-label"><span>QSR Competitive Density</span></div>
+          <div class="metric-bar-track">
+            <div class="metric-bar-fill" style="width:90%;background:#2563eb;"></div>
+            <div class="metric-bar-fill" style="width:55%;background:#dc2626;"></div>
+          </div>
+          <div class="metric-bar-label" style="margin-top:2px;"><span style="color:#2563eb;">Very High</span><span style="color:#dc2626;">Moderate</span></div>
+        </div>
+        <div class="metric-bar">
+          <div class="metric-bar-label"><span>OOH Media Environment</span></div>
+          <div class="metric-bar-track">
+            <div class="metric-bar-fill" style="width:92%;background:#2563eb;"></div>
+            <div class="metric-bar-fill" style="width:50%;background:#dc2626;"></div>
+          </div>
+          <div class="metric-bar-label" style="margin-top:2px;"><span style="color:#2563eb;">Saturated</span><span style="color:#dc2626;">Moderate</span></div>
+        </div>
+        <div style="margin-top:10px;font-size:12px;color:#dc2626;font-weight:600;">&#10007; Too different to compare fairly &#8212; results wouldn&#8217;t be reliable</div>
+      </div>
+
+      <div class="comparison-card pass reveal-right">
+        <h4>Prairie Markets (Recommended)</h4>
+        <div class="metric-bar">
+          <div class="metric-bar-label"><span>Population</span></div>
+          <div class="metric-bar-track">
+            <div class="metric-bar-fill" style="width:40%;background:#E84E0E;" title="Calgary 1.6M"></div>
+            <div class="metric-bar-fill" style="width:28%;background:#f97316;" title="Edmonton 1.1M"></div>
+            <div class="metric-bar-fill" style="width:26%;background:#fb923c;" title="Winnipeg 0.85M"></div>
+          </div>
+          <div class="metric-bar-label" style="margin-top:2px;"><span style="color:#E84E0E;">Cal 1.6M</span><span style="color:#f97316;">Edm 1.1M</span><span style="color:#fb923c;">Win 0.85M</span></div>
+        </div>
+        <div class="metric-bar">
+          <div class="metric-bar-label"><span>Avg. Home Price Index</span></div>
+          <div class="metric-bar-track">
+            <div class="metric-bar-fill" style="width:42%;background:#E84E0E;"></div>
+            <div class="metric-bar-fill" style="width:33%;background:#f97316;"></div>
+            <div class="metric-bar-fill" style="width:28%;background:#fb923c;"></div>
+          </div>
+          <div class="metric-bar-label" style="margin-top:2px;"><span style="color:#E84E0E;">$550K</span><span style="color:#f97316;">$420K</span><span style="color:#fb923c;">$370K</span></div>
+        </div>
+        <div class="metric-bar">
+          <div class="metric-bar-label"><span>QSR Competitive Density</span></div>
+          <div class="metric-bar-track">
+            <div class="metric-bar-fill" style="width:55%;background:#E84E0E;"></div>
+            <div class="metric-bar-fill" style="width:50%;background:#f97316;"></div>
+            <div class="metric-bar-fill" style="width:45%;background:#fb923c;"></div>
+          </div>
+          <div class="metric-bar-label" style="margin-top:2px;"><span style="color:#E84E0E;">Similar</span><span style="color:#f97316;">Similar</span><span style="color:#fb923c;">Similar</span></div>
+        </div>
+        <div class="metric-bar">
+          <div class="metric-bar-label"><span>OOH Media Environment</span></div>
+          <div class="metric-bar-track">
+            <div class="metric-bar-fill" style="width:48%;background:#E84E0E;"></div>
+            <div class="metric-bar-fill" style="width:45%;background:#f97316;"></div>
+            <div class="metric-bar-fill" style="width:40%;background:#fb923c;"></div>
+          </div>
+          <div class="metric-bar-label" style="margin-top:2px;"><span style="color:#E84E0E;">Comparable</span><span style="color:#f97316;">Comparable</span><span style="color:#fb923c;">Comparable</span></div>
+        </div>
+        <div style="margin-top:10px;font-size:12px;color:#16a34a;font-weight:600;">&#10003; Similar size, demographics, and media landscape &#8212; ideal for a fair test</div>
+      </div>
+    </div>
+
+    <!-- WHY IT MATTERS DIAGRAM -->
+    <h3>What Happens When Parallel Trends Fail</h3>
+    <div class="chart-container">
+      <svg viewBox="0 0 700 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;">
+        <!-- Step 1 -->
+        <rect x="0" y="20" width="200" height="100" rx="10" fill="#fee2e2"/>
+        <text x="100" y="48" font-size="11" fill="#dc2626" font-weight="700" text-anchor="middle">MISMATCHED MARKETS</text>
+        <text x="100" y="66" font-size="9" fill="#92400e" text-anchor="middle">Different population size</text>
+        <text x="100" y="78" font-size="9" fill="#92400e" text-anchor="middle">Different consumer behavior</text>
+        <text x="100" y="90" font-size="9" fill="#92400e" text-anchor="middle">Different seasonal patterns</text>
+        <text x="100" y="102" font-size="9" fill="#92400e" text-anchor="middle">Different media environments</text>
+        <!-- Arrow pointing right -->
+        <polygon points="210,65 210,75 240,75 240,80 260,70 240,60 240,65" fill="#f59e0b"/>
+        <!-- Step 2 -->
+        <rect x="265" y="20" width="170" height="100" rx="10" fill="#fef3c7"/>
+        <text x="350" y="48" font-size="11" fill="#92400e" font-weight="700" text-anchor="middle">DIVERGING TRENDS</text>
+        <text x="350" y="68" font-size="9" fill="#92400e" text-anchor="middle">Markets already moving</text>
+        <text x="350" y="80" font-size="9" fill="#92400e" text-anchor="middle">differently before OOH</text>
+        <text x="350" y="92" font-size="9" fill="#92400e" text-anchor="middle">campaign begins</text>
+        <!-- Arrow pointing right -->
+        <polygon points="445,65 445,75 475,75 475,80 495,70 475,60 475,65" fill="#f59e0b"/>
+        <!-- Step 3 -->
+        <rect x="500" y="20" width="200" height="100" rx="10" fill="#fee2e2"/>
+        <text x="600" y="48" font-size="11" fill="#dc2626" font-weight="700" text-anchor="middle">UNRELIABLE RESULTS</text>
+        <text x="600" y="68" font-size="9" fill="#92400e" text-anchor="middle">Can&#8217;t tell if changes are</text>
+        <text x="600" y="80" font-size="9" fill="#92400e" text-anchor="middle">from OOH or other factors</text>
+        <text x="600" y="96" font-size="9" fill="#dc2626" font-weight="600" text-anchor="middle">&#8594; Misleading conclusions</text>
+      </svg>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Bottom Line</div>
+      <p>Calgary, Winnipeg, Regina, and Edmonton share similar demographics, economics, weather patterns, and media environments. This means they naturally trend together &#8212; so when we see a difference after OOH launches, we can be confident it&#8217;s the OOH driving it.</p>
+    </div>
+
+    <p class="note">There are alternative statistical approaches for comparing different-sized markets, but they add complexity and are less precise. Starting with well-matched markets gives us the cleanest, most reliable read.</p>
+  </div>
+
+  <!-- CASE STUDY -->
+  <div class="section reveal" id="sec-case">
+    <div class="section-header">
+      <span class="section-number">05</span>
+      <span class="section-title">Case Study: This Approach Already Works</span>
+    </div>
+    <p><strong style="font-size:16px;">QSR Media Channel Incrementality Test</strong></p>
+    <p class="muted">This isn&#8217;t theoretical. A national QSR brand faced the same question SKIP is asking today: <em>Is this media channel actually driving business, or does it just look like it is?</em> We used the exact same methodology to give them a definitive answer.</p>
+
+    <div class="bold-item" style="margin-top:12px;"><strong>How we set it up:</strong> <span>200 matched store pairs (with and without the media channel), selected based on similar demographics, sales history, and competitive environment. 18 months of baseline data to confirm the markets were trending together before the test.</span></div>
+
+    <h3>Results</h3>
+    <div class="stat-grid">
+      <div class="stat-box reveal-scale stagger-1">
+        <div class="stat-value" data-count="+3.9%">+3.9%</div>
+        <div class="stat-label">Sales Lift</div>
+        <div class="stat-sub">Statistically significant</div>
+      </div>
+      <div class="stat-box reveal-scale stagger-2">
+        <div class="stat-value">+2.7&#8211;5.0%</div>
+        <div class="stat-label">Confidence Range</div>
+        <div class="stat-sub">95% confidence</div>
+      </div>
+      <div class="stat-box reveal-scale stagger-3">
+        <div class="stat-value">Pass</div>
+        <div class="stat-label">Market Match</div>
+        <div class="stat-sub">Markets trended together pre-test</div>
+      </div>
+    </div>
+
+    <h3>Results by Market Type</h3>
+    <table>
+      <thead><tr><th>Market Type</th><th>Sales Lift</th><th>Confidence</th></tr></thead>
+      <tbody>
+        <tr><td class="td-bold">Urban</td><td class="td-orange">+2.3%</td><td>High</td></tr>
+        <tr><td class="td-bold">Suburban</td><td class="td-orange">+5.4%</td><td>Very High</td></tr>
+        <tr><td class="td-bold">Rural</td><td class="td-orange">+5.4%</td><td>High</td></tr>
+      </tbody>
+    </table>
+
+    <div class="card" style="margin-top:16px;">
+      <div class="card-label">Key Insight</div>
+      <p>The media channel drove measurable sales growth everywhere &#8212; but the biggest gains were in suburban and rural areas where it had less competition for attention.</p>
+    </div>
+    <div class="card">
+      <div class="card-label">What the Brand Did Next</div>
+      <p>Armed with market-level data, the brand reallocated spend toward the areas where the channel worked hardest &#8212; turning a general media buy into a precision strategy that boosted overall ROI.</p>
+    </div>
+    <div class="card">
+      <div class="card-label">What This Means for SKIP</div>
+      <p>SKIP&#8217;s study follows the same proven framework. The difference: we&#8217;re measuring across the full funnel &#8212; not just sales, but awareness, consideration, and conversion &#8212; so SKIP will know exactly where OOH is moving the needle.</p>
+    </div>
+  </div>
+
+  <!-- WHAT WE WILL MEASURE -->
+  <div class="section reveal" id="sec-measure">
+    <div class="section-header">
+      <span class="section-number">06</span>
+      <span class="section-title">What We Will Measure</span>
+    </div>
+    <p>Most OOH studies stop at awareness. This one doesn&#8217;t. We&#8217;re tracking OOH&#8217;s impact across every stage of the customer journey &#8212; so SKIP can see exactly where OOH is building momentum and where it&#8217;s converting:</p>
+    <table>
+      <thead><tr><th>Funnel Stage</th><th>What We Measure</th><th>Data Source</th></tr></thead>
+      <tbody>
+        <tr><td class="td-bold">Awareness</td><td>TOMA, Spontaneous &amp; Aided Recall</td><td>Brand Tracker (Pre/Post)</td></tr>
+        <tr><td class="td-bold">Consideration</td><td>Consideration Scores, Search Volume Uplift</td><td>Brand Tracker, Google Trends</td></tr>
+        <tr><td class="td-bold">Conversion</td><td>Order Volume, Promo Code Redemption</td><td>SKIP Internal Data</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Building Toward a Bigger Picture</h3>
+    <div class="bold-item"><strong>This study answers:</strong> <span>&#8220;Is OOH driving real, measurable impact for SKIP &#8212; from awareness through to orders?&#8221;</span></div>
+    <div class="bold-item"><strong>The natural next question:</strong> <span>Which specific OOH formats (billboards vs. transit shelters, digital vs. static) are driving which outcomes? That becomes Phase 2.</span></div>
+    <div class="bold-item"><strong>The long-term vision:</strong> <span>Each campaign cycle adds another layer of insight. This study is the foundation &#8212; future rounds can layer in format optimization, geographic expansion, and seasonal planning to build a complete OOH intelligence system for SKIP.</span></div>
+  </div>
+
+  <!-- TIMELINE -->
+  <div class="section reveal" id="sec-timeline">
+    <div class="section-header">
+      <span class="section-number">07</span>
+      <span class="section-title">Timeline</span>
+    </div>
+    <p>SKIP can have answers in hand within <strong style="color:var(--orange);">12&#8211;16 weeks</strong> of kickoff &#8212; in time to inform the next planning cycle.</p>
+
+    <div class="timeline">
+      <div class="tl-item">
+        <span class="tl-phase">Study Design &amp; Market Matching</span><span class="tl-dur">2 wks</span>
+        <div class="tl-desc">Lock in markets, confirm historical data looks clean, align on the plan</div>
+      </div>
+      <div class="tl-item">
+        <span class="tl-phase">Pre-Period Data Collection</span><span class="tl-dur">2 wks</span>
+        <div class="tl-desc">Gather baseline brand tracker data and set benchmarks for comparison</div>
+      </div>
+      <div class="tl-item">
+        <span class="tl-phase">In-Market Campaign</span><span class="tl-dur">4&#8211;6 wks</span>
+        <div class="tl-desc">OOH goes live in Calgary, Winnipeg, and Regina; Edmonton stays dark</div>
+      </div>
+      <div class="tl-item">
+        <span class="tl-phase">Post-Period Data Collection</span><span class="tl-dur">2 wks</span>
+        <div class="tl-desc">Collect post-campaign brand tracker results from all markets</div>
+      </div>
+      <div class="tl-item">
+        <span class="tl-phase">Analysis &amp; Reporting</span><span class="tl-dur">2 wks</span>
+        <div class="tl-desc">Run the analysis, pull out the key findings, and deliver a final report SKIP can act on immediately</div>
+      </div>
+    </div>
+    <p class="note">Note: Final timing subject to brand tracker data collection schedule.</p>
+  </div>
+
+  <!-- DATA WE NEED -->
+  <div class="section reveal" id="sec-data">
+    <div class="section-header">
+      <span class="section-number">08</span>
+      <span class="section-title">What We&#8217;ll Need from SKIP</span>
+    </div>
+    <p>Getting to reliable answers requires a small but important set of inputs. Here&#8217;s what we need and why each piece matters:</p>
+    <table>
+      <thead><tr><th>What We Need</th><th>Why It Matters</th></tr></thead>
+      <tbody>
+        <tr><td class="td-bold">Brand Tracker Coverage</td><td>Confirm that awareness and brand metrics are tracked in Calgary, Winnipeg, Regina, and Edmonton</td></tr>
+        <tr><td class="td-bold">Historical Brand Data</td><td>6&#8211;12 months of past data by market so we can verify the markets were trending together before the test</td></tr>
+        <tr><td class="td-bold">Edmonton OOH Holdout</td><td>Confirm Edmonton will have zero OOH during the 8-week test window</td></tr>
+        <tr><td class="td-bold">OOH Spend by Market</td><td>Planned investment levels for the March campaign so we can account for spend differences</td></tr>
+        <tr><td class="td-bold">Order Data (Optional)</td><td>Market-level orders and promo code usage &#8212; this lets us measure impact all the way through to conversion</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- NEXT STEPS -->
+  <div class="section reveal" id="sec-next">
+    <div class="section-header">
+      <span class="section-number">09</span>
+      <span class="section-title">Next Steps</span>
+    </div>
+    <p>Everything is in place to move quickly. Here&#8217;s what it takes to get started:</p>
+    <table>
+      <thead><tr><th style="width:36px;">#</th><th>Action</th><th style="width:160px;">Owner</th></tr></thead>
+      <tbody>
+        <tr><td class="td-orange">1</td><td>Confirm brand tracker covers Calgary, Winnipeg, Regina, and Edmonton</td><td class="td-bold">SKIP Team</td></tr>
+        <tr><td class="td-orange">2</td><td>Share 6&#8211;12 months of historical brand data by market</td><td class="td-bold">SKIP Team</td></tr>
+        <tr><td class="td-orange">3</td><td>Confirm Edmonton will hold zero OOH during the test window</td><td class="td-bold">SKIP Team</td></tr>
+        <tr><td class="td-orange">4</td><td>Share planned OOH spend by market for March</td><td class="td-bold">SKIP / Planning</td></tr>
+        <tr><td class="td-orange">5</td><td>Finalize study design and kick off</td><td class="td-bold">Our Team</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    Omnicom Media Canada &nbsp;|&nbsp; Growth Analytics &nbsp;|&nbsp; Prepared for SKIP &nbsp;|&nbsp; March 2026
+  </div>
+
+</div>
+<script>
+(function(){
+  // ── NAV & ACTIVE SECTION ──
+  const nav = document.getElementById('stickyNav');
+  const links = nav.querySelectorAll('a[href^="#"]');
+  const navSections = [];
+  links.forEach(a => {
+    const el = document.querySelector(a.getAttribute('href'));
+    if(el) navSections.push({link:a, el:el});
+  });
+  const titlePage = document.querySelector('.title-page');
+  let navVisible = false;
+
+  // ── HERO IMAGE SLOW ZOOM ──
+  const heroBg = document.getElementById('heroBg');
+  if(heroBg){
+    const img = new Image();
+    img.onload = function(){ heroBg.classList.add('loaded'); };
+    img.src = 'skip-the-dishes-winnipeg-011.webp';
+  }
+
+  // ── SCROLL PROGRESS ──
+  const progressBar = document.getElementById('scrollProgress');
+
+  // ── INTERSECTION OBSERVER FOR REVEALS ──
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if(entry.isIntersecting){
+        entry.target.classList.add('visible');
+        // Animate section header underlines
+        const header = entry.target.querySelector('.section-header');
+        if(header) setTimeout(() => header.classList.add('animate-line'), 200);
+        // Animate SVG draw-lines inside
+        entry.target.querySelectorAll('.draw-line').forEach((line, i) => {
+          setTimeout(() => line.classList.add('animated'), 300 + i * 200);
+        });
+        // Animate timeline dots
+        entry.target.querySelectorAll('.tl-item').forEach((item, i) => {
+          setTimeout(() => item.classList.add('visible'), 200 + i * 150);
+        });
+      }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+  // Observe all reveal elements
+  document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale').forEach(el => {
+    revealObserver.observe(el);
+  });
+
+  // ── ANIMATED STAT COUNTER ──
+  let statsCounted = false;
+  const statObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if(entry.isIntersecting && !statsCounted){
+        statsCounted = true;
+        const statEl = entry.target.querySelector('[data-count]');
+        if(statEl){
+          const target = 3.9;
+          const duration = 1200;
+          const start = performance.now();
+          function tick(now){
+            const elapsed = now - start;
+            const progress = Math.min(elapsed / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            const val = (eased * target).toFixed(1);
+            statEl.textContent = '+' + val + '%';
+            if(progress < 1) requestAnimationFrame(tick);
+          }
+          requestAnimationFrame(tick);
+        }
+      }
+    });
+  }, { threshold: 0.5 });
+
+  document.querySelectorAll('.stat-grid').forEach(el => statObserver.observe(el));
+
+  // ── MAIN SCROLL HANDLER ──
+  function onScroll(){
+    const scrollY = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const threshold = titlePage ? titlePage.offsetHeight - 100 : 300;
+
+    // Progress bar
+    if(docHeight > 0){
+      progressBar.style.width = ((scrollY / docHeight) * 100) + '%';
+    }
+
+    // Nav visibility
+    if(scrollY > threshold && !navVisible){
+      nav.classList.add('visible');
+      navVisible = true;
+    } else if(scrollY <= threshold && navVisible){
+      nav.classList.remove('visible');
+      navVisible = false;
+    }
+
+    // Active section highlight
+    let current = null;
+    for(let i = navSections.length - 1; i >= 0; i--){
+      if(navSections[i].el.getBoundingClientRect().top <= 80){
+        current = navSections[i]; break;
+      }
+    }
+    navSections.forEach(s => s.link.classList.remove('active'));
+    if(current) current.link.classList.add('active');
+
+    // Parallax title page fade
+    if(titlePage && scrollY < titlePage.offsetHeight){
+      const opacity = 1 - (scrollY / (titlePage.offsetHeight * 0.7));
+      const titleContent = titlePage.querySelector('.title-content');
+      if(titleContent){
+        titleContent.style.opacity = Math.max(0, opacity);
+        titleContent.style.transform = 'translateY(' + (scrollY * 0.3) + 'px)';
+      }
+    }
+  }
+
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+})();
+</script>
+</body>
+</html>
