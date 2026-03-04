@@ -1952,10 +1952,10 @@
                                     <p>Hello! I'm your Marketing Intelligence Assistant. I've analyzed your campaign data and I'm ready to help you understand your results.</p>
                                     <p>You can ask me questions like:</p>
                                     <ul>
-                                        <li>Break down performance by Line of Business</li>
-                                        <li>Which partners are optimizing toward consideration KPIs?</li>
-                                        <li>What correlations exist between my performance and industry trends?</li>
-                                        <li>How can I optimize my media spend?</li>
+                                        <li>Who are my top performing partners?</li>
+                                        <li>How are my KPIs trending week over week?</li>
+                                        <li>Which partners have the highest CPMs?</li>
+                                        <li>What recommendations do you have to optimize my campaign?</li>
                                     </ul>
                                 </div>
                             </div>
@@ -1970,16 +1970,18 @@
                     <div class="quick-questions">
                         <div class="quick-header">Quick Questions</div>
                         <div class="quick-list">
-                            <button class="quick-btn" onclick="askQuestion('What are my top performing partners and why?')">What are my top performing partners?</button>
-                            <button class="quick-btn" onclick="askQuestion('Which partners have the highest CPM and should I be concerned?')">Which partners have high CPM?</button>
-                            <button class="quick-btn" onclick="askQuestion('How is my spend distributed across media types?')">How is spend distributed?</button>
-                            <button class="quick-btn" onclick="askQuestion('Break down my campaign performance by Line of Business')">Performance by LOB?</button>
-                            <button class="quick-btn" onclick="askQuestion('Which partners are optimizing toward App Starts and LP Engagements?')">Who is optimizing toward consideration KPIs?</button>
-                            <button class="quick-btn" onclick="askQuestion('What correlations do you see between my campaign performance and current industry trends?')">Performance vs. industry trends?</button>
-                            <button class="quick-btn" onclick="askQuestion('What recommendations do you have to optimize my campaign?')">How can I optimize my campaign?</button>
-                            <button class="quick-btn" onclick="askQuestion('How is my budget pacing looking?')">How is my budget pacing?</button>
-                            <button class="quick-btn" onclick="askQuestion('What Canadian banking trends should I consider for my campaigns?')">Canadian banking trends?</button>
-                            <button class="quick-btn" onclick="askQuestion('How does my CPM compare to financial services benchmarks?')">How does my CPM compare?</button>
+                            <button class="quick-btn" onclick="askQuestion('What are my top performing partners and why?')">Who are my top partners?</button>
+                            <button class="quick-btn" onclick="askQuestion('Which partners have the highest CPM and should I be concerned?')">Are any CPMs too high?</button>
+                            <button class="quick-btn" onclick="askQuestion('How is my spend distributed across media types?')">Spend by media type</button>
+                            <button class="quick-btn" onclick="askQuestion('Break down my campaign performance by Line of Business')">Performance by LOB</button>
+                            <button class="quick-btn" onclick="askQuestion('What are the WOW results for main KPIs?')">Week-over-week trends</button>
+                            <button class="quick-btn" onclick="askQuestion('Which week was the best performing week?')">Best performing week</button>
+                            <button class="quick-btn" onclick="askQuestion('What partners have generated the most app completes?')">Top partners by app completes</button>
+                            <button class="quick-btn" onclick="askQuestion('What video partners have the highest VCR%?')">Highest video completion rates</button>
+                            <button class="quick-btn" onclick="askQuestion('Which partners are optimizing toward App Starts and LP Engagements?')">KPI optimization by partner</button>
+                            <button class="quick-btn" onclick="askQuestion('What recommendations do you have to optimize my campaign?')">Optimization recommendations</button>
+                            <button class="quick-btn" onclick="askQuestion('How is my budget pacing looking?')">Budget pacing check</button>
+                            <button class="quick-btn" onclick="askQuestion('How does my CPM compare to financial services benchmarks?')">CPM vs. industry benchmarks</button>
                         </div>
                         <div class="data-summary" style="margin: 8px; margin-top: 16px;">
                             <h3>Your Data Summary</h3>
@@ -2304,7 +2306,18 @@
                                 cpc: 0,
                                 completeViews: 0,
                                 cpcv: 0,
-                                cple: 0
+                                cple: 0,
+                                weeklyMetrics: {}
+                            });
+                        }
+
+                        // Track per-partner weekly spend
+                        let ep = partners.find(p => `${p.partner}|${p.mediaType}` === partnerKey);
+                        if (ep) {
+                            weekCols.forEach(wc => {
+                                const val = parseNum(row[wc.col]);
+                                if (!ep.weeklyMetrics[wc.label]) ep.weeklyMetrics[wc.label] = { spend: 0, impressions: 0 };
+                                ep.weeklyMetrics[wc.label].spend += val;
                             });
                         }
 
@@ -2322,6 +2335,12 @@
                     if (existing && total > 0) {
                         existing.impressions += total;
                         existing.cpm = existing.spend / existing.impressions * 1000;
+                        // Track per-partner weekly impressions
+                        weekCols.forEach(wc => {
+                            const val = parseNum(row[wc.col]);
+                            if (!existing.weeklyMetrics[wc.label]) existing.weeklyMetrics[wc.label] = { spend: 0, impressions: 0 };
+                            existing.weeklyMetrics[wc.label].impressions += val;
+                        });
                     }
                 }
 
@@ -2476,7 +2495,8 @@
                                 cpc: 0,
                                 completeViews: 0,
                                 cpcv: 0,
-                                cple: 0
+                                cple: 0,
+                                weeklyMetrics: {}
                             });
                         }
 
@@ -2485,6 +2505,16 @@
                             if (!weeklyTotals[wc.label]) weeklyTotals[wc.label] = 0;
                             weeklyTotals[wc.label] += weekSpend;
                         });
+
+                        // Track per-partner weekly spend
+                        let epSpend = partners.find(p => `${p.partner}|${p.mediaType}` === partnerKey);
+                        if (epSpend) {
+                            weekCols.forEach(wc => {
+                                const val = parseNum(row[wc.col]);
+                                if (!epSpend.weeklyMetrics[wc.label]) epSpend.weeklyMetrics[wc.label] = { spend: 0, impressions: 0 };
+                                epSpend.weeklyMetrics[wc.label].spend += val;
+                            });
+                        }
                     }
                 }
 
@@ -2494,6 +2524,13 @@
                     if (existing && total > 0) {
                         existing.impressions += total;
                         existing.cpm = existing.spend / existing.impressions * 1000;
+
+                        // Track per-partner weekly impressions
+                        weekCols.forEach(wc => {
+                            const val = parseNum(row[wc.col]);
+                            if (!existing.weeklyMetrics[wc.label]) existing.weeklyMetrics[wc.label] = { spend: 0, impressions: 0 };
+                            existing.weeklyMetrics[wc.label].impressions += val;
+                        });
                     }
                 }
 
@@ -2595,7 +2632,8 @@
                         cpc: 0,
                         completeViews: 0,
                         cpcv: 0,
-                        cple: 0
+                        cple: 0,
+                        weeklyMetrics: {}
                     };
                 }
                 const g = grouped[key];
@@ -2605,6 +2643,14 @@
                 g.clicks += (p.clicks || 0);
                 g.completeViews += (p.completeViews || 0);
                 if (p.cple > 0) g.cple = p.cple;
+                // Merge weekly metrics for WOW comparison
+                if (p.weeklyMetrics) {
+                    Object.entries(p.weeklyMetrics).forEach(([week, vals]) => {
+                        if (!g.weeklyMetrics[week]) g.weeklyMetrics[week] = { spend: 0, impressions: 0 };
+                        g.weeklyMetrics[week].spend += vals.spend;
+                        g.weeklyMetrics[week].impressions += vals.impressions;
+                    });
+                }
                 // Merge optimizing KPIs (deduplicated)
                 (p.optimizingKPIs || []).forEach(kpi => {
                     if (!g.optimizingKPIs.includes(kpi)) g.optimizingKPIs.push(kpi);
@@ -2675,7 +2721,8 @@
             const avgCPM = totalImps > 0 ? totalSpend / totalImps * 1000 : 0;
             const mediaTypes = [...new Set(validPartners.map(p => p.mediaType))];
             const sortedBySpend = [...validPartners].sort((a, b) => b.spend - a.spend);
-            const sortedByCPM = [...validPartners].sort((a, b) => a.cpm - b.cpm);
+            const partnersWithCPM = validPartners.filter(p => p.cpm > 0);
+            const sortedByCPM = [...partnersWithCPM].sort((a, b) => a.cpm - b.cpm);
 
             // Build LOB list
             allLOBs = [...new Set(validPartners.map(p => p.lob || 'Other'))].filter(l => l !== 'Other').sort();
@@ -4342,11 +4389,11 @@
                 <p>These partners received the highest investment. ${ctx.topPartners[0]?.partner || 'Your top partner'} leads with ${Math.round(ctx.topPartners[0]?.spend/ctx.totalSpend*100)}% of total spend. Their CPM of $${ctx.topPartners[0]?.cpm.toFixed(2)} is ${ctx.topPartners[0]?.cpm < ctx.avgCPM ? 'below' : 'above'} your campaign average of $${ctx.avgCPM.toFixed(2)}.</p>`;
             }
 
-            if (q.includes('high') && q.includes('cpm') || q.includes('expensive')) {
+            if ((q.includes('high') && q.includes('cpm')) || q.includes('expensive')) {
                 const premium = ctx.highestCPM.slice(0, 5);
                 return `<p>Here are your <strong>highest CPM partners</strong> that may need attention:</p>
                 <ul>
-                    ${premium.map(p => `<li><strong>${p.partner}</strong>: $${p.cpm.toFixed(2)} CPM (${p.mediaType}) - ${Math.round((p.cpm - ctx.avgCPM)/ctx.avgCPM*100)}% above average</li>`).join('')}
+                    ${premium.map(p => `<li><strong>${p.partner}</strong>: $${p.cpm.toFixed(2)} CPM (${p.mediaType}) - ${ctx.avgCPM > 0 ? Math.round((p.cpm - ctx.avgCPM)/ctx.avgCPM*100) : 0}% above average</li>`).join('')}
                 </ul>
                 <p><strong>Should you be concerned?</strong> Premium CPMs aren't inherently bad if they deliver quality. However, I recommend:</p>
                 <ul>
@@ -4375,7 +4422,7 @@
             if (q.includes('efficien') || q.includes('improve') || q.includes('optimiz')) {
                 return `<p>Here are my <strong>recommendations to optimize your campaign</strong>:</p>
                 <ul>
-                    <li><strong>Review partner allocation:</strong> ${ctx.lowestCPM[0]?.partner || 'Your lowest CPM partner'} has a CPM of $${ctx.lowestCPM[0]?.cpm.toFixed(2)}. Consider reviewing budget allocation based on partner performance.</li>
+                    <li><strong>Review partner allocation:</strong> ${ctx.lowestCPM[0]?.partner || 'Your lowest CPM partner'} has a CPM of $${ctx.lowestCPM[0]?.cpm?.toFixed(2) || '0.00'}. Consider reviewing budget allocation based on partner performance.</li>
                     <li><strong>Monitor CPM trends:</strong> Track CPM changes over time to identify opportunities for rate negotiations.</li>
                     <li><strong>Diversify media mix:</strong> You're using ${ctx.mediaTypes.length} media types. Consider testing additional channels to expand reach.</li>
                 </ul>
@@ -4399,6 +4446,437 @@
                 </ul>`;
             }
 
+            // WOW (Week-over-Week) comparison handler
+            if (q.includes('wow') || q.includes('week over week') || q.includes('week-over-week') ||
+                (q.includes('week') && q.includes('change')) || (q.includes('week') && q.includes('compar')) ||
+                q.includes('period over period')) {
+
+                // Get week labels from context
+                const wLabels = ctx.weekLabels || [];
+                if (wLabels.length < 2) {
+                    return `<p>I need at least <strong>2 weeks of data</strong> to calculate week-over-week changes. Currently I have ${wLabels.length} week(s) of data. Please upload a report with multiple weekly columns to enable WOW analysis.</p>`;
+                }
+
+                const activePartners = allPartners.filter(p => p.spend > 0 && p.mediaType && p.mediaType.toLowerCase() !== 'total');
+
+                // Find actual week keys from partner weeklyMetrics
+                // Collect week keys and compute totals per week to filter out empty weeks
+                let weekTotals = {}; // { weekKey: { spend: total, impressions: total } }
+                activePartners.forEach(p => {
+                    if (p.weeklyMetrics) {
+                        Object.entries(p.weeklyMetrics).forEach(([k, v]) => {
+                            if (!weekTotals[k]) weekTotals[k] = { spend: 0, impressions: 0 };
+                            weekTotals[k].spend += v.spend || 0;
+                            weekTotals[k].impressions += v.impressions || 0;
+                        });
+                    }
+                });
+                // Only include weeks that have actual data (non-zero spend or impressions)
+                let allWeekKeys = Object.keys(weekTotals).filter(k =>
+                    weekTotals[k].spend > 0 || weekTotals[k].impressions > 0
+                );
+
+                if (allWeekKeys.length < 2) {
+                    const totalWeeks = Object.keys(weekTotals).length;
+                    return `<p>I need at least <strong>2 weeks with data</strong> to calculate week-over-week changes. Found ${totalWeeks} week column(s) in the report but only ${allWeekKeys.length} had non-zero data. Please ensure your report spans at least 2 active weeks.</p>`;
+                }
+
+                // Sort week keys chronologically (date-aware sort)
+                allWeekKeys.sort((a, b) => {
+                    const da = new Date(a);
+                    const db = new Date(b);
+                    if (!isNaN(da) && !isNaN(db)) return da - db;
+                    const wa = a.match(/Week\s*(\d+)/i);
+                    const wb = b.match(/Week\s*(\d+)/i);
+                    if (wa && wb) return parseInt(wa[1]) - parseInt(wb[1]);
+                    return a.localeCompare(b);
+                });
+
+                // Short labels for display
+                const shortLabel = (lbl) => {
+                    const m = lbl.match(/^(\w+)\s+(\d+)/);
+                    return m ? m[1].substring(0, 3) + ' ' + m[2] : lbl;
+                };
+
+                // Determine which week the user is asking about
+                // Try to match a date/week reference in the question (e.g., "feb 10", "january 26", "week 3")
+                let targetWeekIdx = allWeekKeys.length - 1; // default: latest week
+                const monthNames = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+
+                // Check for month + day pattern in question (e.g., "feb 10", "january 26")
+                const dateMatch = q.match(/\b(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s*(\d{1,2})\b/i);
+                // Check for "week N" pattern
+                const weekMatch = q.match(/\bweek\s*(\d+)\b/i);
+
+                if (dateMatch) {
+                    const searchMonth = dateMatch[1].toLowerCase().substring(0, 3);
+                    const searchDay = dateMatch[2];
+                    // Find the week key that matches this date (use word boundary for day to avoid matching year)
+                    const dayRegex = new RegExp('\\b' + searchDay + '\\b');
+                    const matchIdx = allWeekKeys.findIndex(k => {
+                        const kLower = k.toLowerCase();
+                        return kLower.includes(searchMonth) && dayRegex.test(k);
+                    });
+                    if (matchIdx >= 1) {
+                        targetWeekIdx = matchIdx;
+                    } else if (matchIdx === 0) {
+                        // First week — no previous week to compare
+                        return `<p>Cannot show WOW for <strong>${shortLabel(allWeekKeys[0])}</strong> because it's the first week in the data — there's no previous week to compare against.</p>
+                        <p>Available weeks for WOW comparison: ${allWeekKeys.slice(1).map(k => '<strong>' + shortLabel(k) + '</strong>').join(', ')}</p>
+                        <p><em>Try asking: "WOW results for ${shortLabel(allWeekKeys[1])}"</em></p>`;
+                    } else {
+                        return `<p>I couldn't find a week matching "<strong>${dateMatch[0]}</strong>" in your data.</p>
+                        <p>Available weeks: ${allWeekKeys.map(k => '<strong>' + shortLabel(k) + '</strong>').join(', ')}</p>
+                        <p><em>Try asking: "WOW results for ${shortLabel(allWeekKeys[allWeekKeys.length - 1])}"</em></p>`;
+                    }
+                } else if (weekMatch && !q.includes('week over week') && !q.includes('week-over-week')) {
+                    const weekNum = parseInt(weekMatch[1]);
+                    const matchIdx = allWeekKeys.findIndex(k => {
+                        const wm = k.match(/Week\s*(\d+)/i);
+                        return wm && parseInt(wm[1]) === weekNum;
+                    });
+                    if (matchIdx >= 1) {
+                        targetWeekIdx = matchIdx;
+                    } else if (matchIdx === 0) {
+                        return `<p>Cannot show WOW for <strong>${shortLabel(allWeekKeys[0])}</strong> — it's the first week, no previous week to compare.</p>
+                        <p>Available weeks for WOW: ${allWeekKeys.slice(1).map(k => '<strong>' + shortLabel(k) + '</strong>').join(', ')}</p>`;
+                    }
+                }
+
+                const currentWeekKey = allWeekKeys[targetWeekIdx];
+                const previousWeekKey = allWeekKeys[targetWeekIdx - 1];
+                const currentWeekLabel = shortLabel(currentWeekKey);
+                const previousWeekLabel = shortLabel(previousWeekKey);
+
+                // Helper to compute KPI value from spend & impressions + partner context
+                function computePartnerKPI(p, spend, impressions) {
+                    const kpi = (p.optimizingKPIs && p.optimizingKPIs[0]) || '';
+                    const kl = kpi.toLowerCase();
+                    if (kl.includes('cpc') && !kl.includes('cpcv')) {
+                        if (p.clicks > 0 && p.impressions > 0) {
+                            const ctr = p.clicks / p.impressions;
+                            const estClicks = impressions * ctr;
+                            return estClicks > 0 ? spend / estClicks : 0;
+                        }
+                        return 0;
+                    }
+                    if (kl === 'cpcv') {
+                        if (p.completeViews > 0 && p.impressions > 0) {
+                            const cvRate = p.completeViews / p.impressions;
+                            const estCV = impressions * cvRate;
+                            return estCV > 0 ? spend / estCV : 0;
+                        }
+                        return 0;
+                    }
+                    if (kl === 'cple' || kl === 'cplpe') {
+                        return impressions > 0 ? spend / impressions * 1000 : 0;
+                    }
+                    return impressions > 0 ? spend / impressions * 1000 : 0;
+                }
+
+                function getKPITypeLabel(p) {
+                    const kpi = (p.optimizingKPIs && p.optimizingKPIs[0]) || '';
+                    const kl = kpi.toLowerCase();
+                    if (kl.includes('viewable') && kl.includes('cpm')) return 'eCPM';
+                    if (kl === 'ecpm') return 'eCPM';
+                    if (kl === 'cpm') return 'CPM';
+                    if (kl === 'cpc') return 'CPC';
+                    if (kl === 'cpcv') return 'CPCV';
+                    if (kl === 'cple' || kl === 'cplpe') return 'CPLE';
+                    if (kl === 'dooh') return 'eCPM';
+                    return 'CPM';
+                }
+
+                const costMetrics = ['eCPM', 'CPM', 'CPC', 'CPCV', 'CPLE', 'CPA'];
+
+                // Build per-partner WOW data
+                let partnerRows = [];
+                let kpiGroups = {};
+
+                activePartners.forEach(p => {
+                    if (!p.weeklyMetrics) return;
+                    const curr = p.weeklyMetrics[currentWeekKey];
+                    const prev = p.weeklyMetrics[previousWeekKey];
+                    if (!curr && !prev) return;
+
+                    const currSpend = curr ? curr.spend : 0;
+                    const prevSpend = prev ? prev.spend : 0;
+                    const currImps = curr ? curr.impressions : 0;
+                    const prevImps = prev ? prev.impressions : 0;
+
+                    const currKPI = computePartnerKPI(p, currSpend, currImps);
+                    const prevKPI = computePartnerKPI(p, prevSpend, prevImps);
+                    const kpiLabel = getKPITypeLabel(p);
+
+                    let wowPct = null;
+                    if (prevKPI > 0 && currKPI > 0) {
+                        wowPct = ((currKPI - prevKPI) / prevKPI) * 100;
+                    }
+
+                    partnerRows.push({
+                        partner: p.partner, mediaType: p.mediaType, kpiLabel,
+                        currKPI, prevKPI, wowPct, currSpend, prevSpend
+                    });
+
+                    if (!kpiGroups[kpiLabel]) {
+                        kpiGroups[kpiLabel] = { currSpend: 0, prevSpend: 0, currImps: 0, prevImps: 0, count: 0 };
+                    }
+                    kpiGroups[kpiLabel].currSpend += currSpend;
+                    kpiGroups[kpiLabel].prevSpend += prevSpend;
+                    kpiGroups[kpiLabel].currImps += currImps;
+                    kpiGroups[kpiLabel].prevImps += prevImps;
+                    kpiGroups[kpiLabel].count++;
+                });
+
+                partnerRows.sort((a, b) => Math.abs(b.wowPct || 0) - Math.abs(a.wowPct || 0));
+
+                // Build KPI summary cards
+                let cardsHtml = '';
+                Object.entries(kpiGroups).forEach(([kpiLabel, grp]) => {
+                    const currVal = grp.currImps > 0 ? grp.currSpend / grp.currImps * 1000 : 0;
+                    const prevVal = grp.prevImps > 0 ? grp.prevSpend / grp.prevImps * 1000 : 0;
+
+                    let wowPct = prevVal > 0 ? ((currVal - prevVal) / prevVal) * 100 : null;
+                    const isCost = costMetrics.includes(kpiLabel);
+                    let wowColor = '#6b7280';
+                    let wowText = '--';
+
+                    if (wowPct !== null) {
+                        if (isCost) {
+                            wowColor = wowPct <= 0 ? '#059669' : '#dc2626';
+                            const ind = wowPct <= 0 ? '▼' : '▲';
+                            wowText = `${ind} ${wowPct > 0 ? '+' : ''}${wowPct.toFixed(1)}% ${wowPct <= 0 ? '(improvement)' : '(increase)'}`;
+                        } else {
+                            wowColor = wowPct >= 0 ? '#059669' : '#dc2626';
+                            const ind = wowPct >= 0 ? '▲' : '▼';
+                            wowText = `${ind} ${wowPct > 0 ? '+' : ''}${wowPct.toFixed(1)}%`;
+                        }
+                    }
+
+                    cardsHtml += `<div style="background:#f0f4f8; padding:12px; border-radius:8px; flex:1; min-width:130px; border-left:3px solid ${wowColor};">
+                        <div style="font-size:10px; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px;">${kpiLabel} (Blended)</div>
+                        <div style="font-size:18px; font-weight:700; margin:4px 0;">$${currVal.toFixed(2)}</div>
+                        <div style="font-size:11px; color:#6b7280;">Previous: $${prevVal.toFixed(2)}</div>
+                        <div style="font-size:11px; color:${wowColor}; font-weight:600;">${wowText}</div>
+                    </div>`;
+                });
+
+                // Spend & Impressions summary cards
+                let totalCurrSpend = 0, totalPrevSpend = 0, totalCurrImps = 0, totalPrevImps = 0;
+                activePartners.forEach(p => {
+                    if (!p.weeklyMetrics) return;
+                    const curr = p.weeklyMetrics[currentWeekKey];
+                    const prev = p.weeklyMetrics[previousWeekKey];
+                    totalCurrSpend += curr ? curr.spend : 0;
+                    totalPrevSpend += prev ? prev.spend : 0;
+                    totalCurrImps += curr ? curr.impressions : 0;
+                    totalPrevImps += prev ? prev.impressions : 0;
+                });
+
+                const spendWow = totalPrevSpend > 0 ? ((totalCurrSpend - totalPrevSpend) / totalPrevSpend * 100) : null;
+                const impsWow = totalPrevImps > 0 ? ((totalCurrImps - totalPrevImps) / totalPrevImps * 100) : null;
+
+                let spendCardHtml = `<div style="background:#f0f4f8; padding:12px; border-radius:8px; flex:1; min-width:130px; border-left:3px solid #003168;">
+                    <div style="font-size:10px; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px;">Total Spend</div>
+                    <div style="font-size:18px; font-weight:700; margin:4px 0;">${formatCurrency(totalCurrSpend)}</div>
+                    <div style="font-size:11px; color:#6b7280;">Previous: ${formatCurrency(totalPrevSpend)}</div>
+                    <div style="font-size:11px; color:#6b7280; font-weight:600;">${spendWow !== null ? (spendWow >= 0 ? '▲ +' : '▼ ') + spendWow.toFixed(1) + '%' : '--'}</div>
+                </div>`;
+
+                let impsCardHtml = `<div style="background:#f0f4f8; padding:12px; border-radius:8px; flex:1; min-width:130px; border-left:3px solid #003168;">
+                    <div style="font-size:10px; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px;">Impressions</div>
+                    <div style="font-size:18px; font-weight:700; margin:4px 0;">${(totalCurrImps/1e6).toFixed(2)}M</div>
+                    <div style="font-size:11px; color:#6b7280;">Previous: ${(totalPrevImps/1e6).toFixed(2)}M</div>
+                    <div style="font-size:11px; color:#6b7280; font-weight:600;">${impsWow !== null ? (impsWow >= 0 ? '▲ +' : '▼ ') + impsWow.toFixed(1) + '%' : '--'}</div>
+                </div>`;
+
+                // Build partner detail table
+                let tableRows = '';
+                partnerRows.forEach(r => {
+                    const isCost = costMetrics.includes(r.kpiLabel);
+                    let wowCell = '--';
+                    let wowStyle = 'color:#6b7280;';
+
+                    if (r.wowPct !== null) {
+                        if (isCost) {
+                            wowStyle = r.wowPct <= 0 ? 'color:#059669; font-weight:600;' : 'color:#dc2626; font-weight:600;';
+                        } else {
+                            wowStyle = r.wowPct >= 0 ? 'color:#059669; font-weight:600;' : 'color:#dc2626; font-weight:600;';
+                        }
+                        const arrow = r.wowPct >= 0 ? '▲' : '▼';
+                        wowCell = `${arrow} ${r.wowPct > 0 ? '+' : ''}${r.wowPct.toFixed(1)}%`;
+                    }
+
+                    const currDisplay = r.currKPI > 0 ? '$' + r.currKPI.toFixed(2) : '--';
+                    const prevDisplay = r.prevKPI > 0 ? '$' + r.prevKPI.toFixed(2) : '--';
+
+                    tableRows += `<tr style="border-bottom:1px solid #e5e7eb;">
+                        <td style="padding:6px 8px; font-weight:500;">${r.partner}</td>
+                        <td style="padding:6px 8px; color:#6b7280;">${r.mediaType}</td>
+                        <td style="padding:6px 8px;">${r.kpiLabel}</td>
+                        <td style="padding:6px 8px; text-align:right;">${currDisplay}</td>
+                        <td style="padding:6px 8px; text-align:right;">${prevDisplay}</td>
+                        <td style="padding:6px 8px; text-align:right; ${wowStyle}">${wowCell}</td>
+                    </tr>`;
+                });
+
+                // Build available weeks hint for the user
+                const otherWeeks = allWeekKeys.slice(1).filter((_, i) => allWeekKeys[i + 1] !== currentWeekKey)
+                    .map(k => shortLabel(k));
+                let weekHint = '';
+                if (allWeekKeys.length > 2) {
+                    weekHint = `<p style="font-size:11px; color:#6b7280; margin-top:6px;">📅 <em>Want a different week? Try: ${allWeekKeys.slice(1).map(k => '"WOW for ' + shortLabel(k) + '"').join(', ')}</em></p>`;
+                }
+
+                return `<p><strong>Week-over-Week Comparison: ${currentWeekLabel} vs ${previousWeekLabel}</strong></p>
+                <div style="display:flex; gap:10px; flex-wrap:wrap; margin:10px 0;">
+                    ${spendCardHtml}
+                    ${impsCardHtml}
+                    ${cardsHtml}
+                </div>
+                <table style="width:100%; border-collapse:collapse; font-size:11px; margin-top:14px;">
+                    <thead>
+                        <tr style="background:#003168; color:white;">
+                            <th style="padding:8px; text-align:left;">Partner</th>
+                            <th style="padding:8px; text-align:left;">Media Type</th>
+                            <th style="padding:8px; text-align:left;">KPI</th>
+                            <th style="padding:8px; text-align:right;">Current (${currentWeekLabel})</th>
+                            <th style="padding:8px; text-align:right;">Previous (${previousWeekLabel})</th>
+                            <th style="padding:8px; text-align:right;">WOW %</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tableRows}
+                    </tbody>
+                </table>
+                <p style="font-size:11px; color:#6b7280; margin-top:8px;"><em>Note: For cost metrics (CPM, eCPM, CPC, CPCV), green (▼) indicates improvement (lower cost). For volume metrics, green (▲) indicates growth.</em></p>
+                ${weekHint}`;
+            }
+
+            // Best/worst week handler
+            if ((q.includes('best') || q.includes('worst') || q.includes('top') || q.includes('strongest') || q.includes('weakest') || q.includes('peak')) && q.includes('week')) {
+                const activePartners = allPartners.filter(p => p.spend > 0 && p.mediaType && p.mediaType.toLowerCase() !== 'total');
+
+                // Collect week totals from partner weeklyMetrics
+                let weekSummary = {}; // { weekKey: { spend, impressions } }
+                activePartners.forEach(p => {
+                    if (p.weeklyMetrics) {
+                        Object.entries(p.weeklyMetrics).forEach(([k, v]) => {
+                            if (!weekSummary[k]) weekSummary[k] = { spend: 0, impressions: 0 };
+                            weekSummary[k].spend += v.spend || 0;
+                            weekSummary[k].impressions += v.impressions || 0;
+                        });
+                    }
+                });
+
+                // Filter to only weeks with actual data
+                let weekKeys = Object.keys(weekSummary).filter(k =>
+                    weekSummary[k].spend > 0 || weekSummary[k].impressions > 0
+                );
+
+                if (weekKeys.length === 0) {
+                    return `<p>No weekly data available to determine the best/worst week. Please upload a report with weekly breakdowns.</p>`;
+                }
+
+                // Sort chronologically
+                weekKeys.sort((a, b) => {
+                    const da = new Date(a);
+                    const db = new Date(b);
+                    if (!isNaN(da) && !isNaN(db)) return da - db;
+                    const wa = a.match(/Week\s*(\d+)/i);
+                    const wb = b.match(/Week\s*(\d+)/i);
+                    if (wa && wb) return parseInt(wa[1]) - parseInt(wb[1]);
+                    return a.localeCompare(b);
+                });
+
+                const shortLabel = (lbl) => {
+                    const m = lbl.match(/^(\w+)\s+(\d+)/);
+                    return m ? m[1].substring(0, 3) + ' ' + m[2] : lbl;
+                };
+
+                // Build week-by-week summary
+                let weekRows = weekKeys.map(k => {
+                    const s = weekSummary[k];
+                    const cpm = s.impressions > 0 ? s.spend / s.impressions * 1000 : 0;
+                    return { key: k, label: shortLabel(k), spend: s.spend, impressions: s.impressions, cpm };
+                });
+
+                // Find best/worst weeks
+                const bestSpendWeek = weekRows.reduce((a, b) => a.spend > b.spend ? a : b);
+                const bestImpsWeek = weekRows.reduce((a, b) => a.impressions > b.impressions ? a : b);
+                const weeksWithCPM = weekRows.filter(w => w.cpm > 0);
+                const bestCPMWeek = weeksWithCPM.length > 0 ? weeksWithCPM.reduce((a, b) => a.cpm < b.cpm ? a : b) : bestSpendWeek;
+                const worstCPMWeek = weeksWithCPM.length > 0 ? weeksWithCPM.reduce((a, b) => a.cpm > b.cpm ? a : b) : bestSpendWeek;
+
+                const isWorstQuery = q.includes('worst') || q.includes('weakest');
+
+                // Build the table rows
+                let tableRows = '';
+                weekRows.forEach((w, i) => {
+                    const isBestSpend = w.key === bestSpendWeek.key;
+                    const isBestImps = w.key === bestImpsWeek.key;
+                    const isBestCPM = w.key === bestCPMWeek.key;
+                    const rowBg = (isBestSpend || isBestImps || isBestCPM) && !isWorstQuery ? 'background:#f0fdf4;' : '';
+
+                    // WOW % vs previous week
+                    let wowSpend = '--';
+                    let wowCPM = '--';
+                    if (i > 0) {
+                        const prev = weekRows[i - 1];
+                        if (prev.spend > 0) {
+                            const pct = ((w.spend - prev.spend) / prev.spend * 100);
+                            const color = pct >= 0 ? '#059669' : '#dc2626';
+                            const arrow = pct >= 0 ? '▲' : '▼';
+                            wowSpend = `<span style="color:${color}; font-weight:600;">${arrow} ${pct > 0 ? '+' : ''}${pct.toFixed(1)}%</span>`;
+                        }
+                        if (prev.cpm > 0 && w.cpm > 0) {
+                            const pct = ((w.cpm - prev.cpm) / prev.cpm * 100);
+                            const color = pct <= 0 ? '#059669' : '#dc2626'; // Lower CPM = better
+                            const arrow = pct <= 0 ? '▼' : '▲';
+                            wowCPM = `<span style="color:${color}; font-weight:600;">${arrow} ${pct > 0 ? '+' : ''}${pct.toFixed(1)}%</span>`;
+                        }
+                    }
+
+                    const medals = [];
+                    if (isBestSpend) medals.push('💰');
+                    if (isBestImps) medals.push('👁️');
+                    if (isBestCPM) medals.push('⭐');
+
+                    tableRows += `<tr style="border-bottom:1px solid #e5e7eb; ${rowBg}">
+                        <td style="padding:8px; font-weight:500;">${w.label} ${medals.join(' ')}</td>
+                        <td style="padding:8px; text-align:right;">${formatCurrency(w.spend)}</td>
+                        <td style="padding:8px; text-align:right;">${wowSpend}</td>
+                        <td style="padding:8px; text-align:right;">${(w.impressions/1e6).toFixed(2)}M</td>
+                        <td style="padding:8px; text-align:right;">${w.cpm > 0 ? '$' + w.cpm.toFixed(2) : '--'}</td>
+                        <td style="padding:8px; text-align:right;">${wowCPM}</td>
+                    </tr>`;
+                });
+
+                const highlightWeek = isWorstQuery ? worstCPMWeek : bestSpendWeek;
+                const summaryText = isWorstQuery
+                    ? `<strong>${worstCPMWeek.label}</strong> had the highest blended CPM at <strong>$${worstCPMWeek.cpm.toFixed(2)}</strong>, making it the least cost-efficient week.`
+                    : `<strong>${bestSpendWeek.label}</strong> was the highest-spending week at <strong>${formatCurrency(bestSpendWeek.spend)}</strong> with <strong>${(bestSpendWeek.impressions/1e6).toFixed(2)}M</strong> impressions.${bestCPMWeek.key !== bestSpendWeek.key ? ' However, <strong>' + bestCPMWeek.label + '</strong> had the best CPM efficiency at <strong>$' + bestCPMWeek.cpm.toFixed(2) + '</strong>.' : ' It also had the best CPM efficiency at <strong>$' + bestCPMWeek.cpm.toFixed(2) + '</strong>.'}`;
+
+                return `<p><strong>${isWorstQuery ? 'Worst' : 'Best'} Performing Week Analysis</strong></p>
+                <p style="font-size:12px; margin:8px 0;">${summaryText}</p>
+                <table style="width:100%; border-collapse:collapse; font-size:11px; margin-top:10px;">
+                    <thead>
+                        <tr style="background:#003168; color:white;">
+                            <th style="padding:8px; text-align:left;">Week</th>
+                            <th style="padding:8px; text-align:right;">Spend</th>
+                            <th style="padding:8px; text-align:right;">WOW %</th>
+                            <th style="padding:8px; text-align:right;">Impressions</th>
+                            <th style="padding:8px; text-align:right;">Blended CPM</th>
+                            <th style="padding:8px; text-align:right;">CPM WOW %</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tableRows}
+                    </tbody>
+                </table>
+                <p style="font-size:10px; color:#6b7280; margin-top:6px;">💰 = Highest Spend &nbsp; 👁️ = Most Impressions &nbsp; ⭐ = Best CPM (lowest)</p>`;
+            }
+
             if (q.includes('trend') || q.includes('weekly')) {
                 if (ctx.weekly.length === 0) {
                     return `<p>I don't have weekly trend data available for this campaign. Upload files with weekly breakdowns to enable trend analysis.</p>`;
@@ -4412,16 +4890,16 @@
                     <li><strong>Peak week:</strong> ${formatCurrency(maxWeek)} (Week ${ctx.weekly.indexOf(maxWeek) + 1})</li>
                     <li><strong>Lowest week:</strong> ${formatCurrency(minWeek)} (Week ${ctx.weekly.indexOf(minWeek) + 1})</li>
                     <li><strong>Average weekly spend:</strong> ${formatCurrency(avgWeek)}</li>
-                    <li><strong>Variance:</strong> ${Math.round((maxWeek - minWeek)/avgWeek*100)}% between peak and trough</li>
+                    <li><strong>Variance:</strong> ${avgWeek > 0 ? Math.round((maxWeek - minWeek)/avgWeek*100) : 0}% between peak and trough</li>
                 </ul>
-                <p>${(maxWeek - minWeek)/avgWeek > 0.5 ? 'There is significant spend variance week-over-week. This could indicate campaign phases or market events. Consider if this pacing aligns with your campaign strategy.' : 'Spend is relatively consistent week-over-week, indicating steady campaign pacing.'}</p>`;
+                <p>${avgWeek > 0 && (maxWeek - minWeek)/avgWeek > 0.5 ? 'There is significant spend variance week-over-week. This could indicate campaign phases or market events. Consider if this pacing aligns with your campaign strategy.' : 'Spend is relatively consistent week-over-week, indicating steady campaign pacing.'}</p>`;
             }
 
             if (q.includes('cut') || q.includes('remove') || q.includes('drop')) {
                 const candidates = ctx.highestCPM.slice(0, 3);
                 return `<p>Based on CPM analysis, here are <strong>partners to review</strong>:</p>
                 <ul>
-                    ${candidates.map(p => `<li><strong>${p.partner}</strong>: $${p.cpm.toFixed(2)} CPM - ${Math.round(p.cpm/ctx.avgCPM)}x your average CPM</li>`).join('')}
+                    ${candidates.map(p => `<li><strong>${p.partner}</strong>: $${p.cpm.toFixed(2)} CPM - ${ctx.avgCPM > 0 ? Math.round(p.cpm/ctx.avgCPM) : 0}x your average CPM</li>`).join('')}
                 </ul>
                 <p><strong>Before making changes, consider:</strong></p>
                 <ul>
@@ -4471,7 +4949,7 @@
                         const totalDays = (budgetConfig.endDate - budgetConfig.startDate) / (1000 * 60 * 60 * 24);
                         const elapsedDays = (today - budgetConfig.startDate) / (1000 * 60 * 60 * 24);
                         const targetPct = (elapsedDays / totalDays * 100).toFixed(1);
-                        const diff = spentPct - targetPct;
+                        const diff = parseFloat(spentPct) - parseFloat(targetPct);
 
                         if (Math.abs(diff) <= 5) {
                             pacingAnalysis = `You're <strong>on track</strong> - spending at ${spentPct}% vs target of ${targetPct}%.`;
@@ -4501,7 +4979,7 @@
                 }
             }
 
-            if (q.includes('competitor') || q.includes('td') || q.includes('bmo') || q.includes('scotiabank') || q.includes('cibc')) {
+            if (q.includes('competitor') || /\btd\b/.test(q) || q.includes('bmo') || q.includes('scotiabank') || q.includes('cibc')) {
                 return `<p>Here's a <strong>competitive landscape</strong> summary of recent Big 5 activity:</p>
                 <ul>
                     <li><strong>TD Bank:</strong> Launched "More Human" brand platform (Feb 2026) - first unified identity across Canada and U.S.; confirmed DSRB defence bank partner (Feb 5, 2026). <a href="https://stories.td.com/us/en/article/td-launches-new-brand-platform-more-human-reflecting-a-digital-first-people-centered-future" target="_blank">(Source)</a></li>
@@ -4604,13 +5082,115 @@
                 </ul>`; 
             }
 
+            // App completes / CPLE handler
+            if (q.includes('app complete') || q.includes('cple') || (q.includes('most') && q.includes('completes'))) {
+                const withCompletes = allPartners.filter(p => p.completeViews > 0 && p.spend > 0 && p.mediaType && p.mediaType.toLowerCase() !== 'total');
+                if (withCompletes.length === 0) {
+                    return `<p>No partners in your data have <strong>app complete</strong> (complete views) data. This metric is typically available for partners optimizing toward CPLE or CPCV.</p>`;
+                }
+
+                const sorted = [...withCompletes].sort((a, b) => b.completeViews - a.completeViews);
+                const totalCompletes = sorted.reduce((s, p) => s + p.completeViews, 0);
+
+                let tableRows = '';
+                sorted.forEach(p => {
+                    const cple = p.completeViews > 0 ? p.spend / p.completeViews : 0;
+                    const share = totalCompletes > 0 ? (p.completeViews / totalCompletes * 100) : 0;
+                    tableRows += `<tr style="border-bottom:1px solid #e5e7eb;">
+                        <td style="padding:6px 8px; font-weight:500;">${p.partner}</td>
+                        <td style="padding:6px 8px; color:#6b7280;">${p.mediaType}</td>
+                        <td style="padding:6px 8px; text-align:right; font-weight:600;">${p.completeViews.toLocaleString()}</td>
+                        <td style="padding:6px 8px; text-align:right;">${share.toFixed(1)}%</td>
+                        <td style="padding:6px 8px; text-align:right;">${formatCurrency(p.spend)}</td>
+                        <td style="padding:6px 8px; text-align:right;">$${cple.toFixed(2)}</td>
+                    </tr>`;
+                });
+
+                return `<p><strong>Partners by App Completes</strong></p>
+                <p style="font-size:12px; margin:6px 0;"><strong>${sorted[0].partner}</strong> leads with <strong>${sorted[0].completeViews.toLocaleString()}</strong> app completes (${(sorted[0].completeViews / totalCompletes * 100).toFixed(1)}% of total). Total across all partners: <strong>${totalCompletes.toLocaleString()}</strong>.</p>
+                <table style="width:100%; border-collapse:collapse; font-size:11px; margin-top:10px;">
+                    <thead>
+                        <tr style="background:#003168; color:white;">
+                            <th style="padding:8px; text-align:left;">Partner</th>
+                            <th style="padding:8px; text-align:left;">Media Type</th>
+                            <th style="padding:8px; text-align:right;">App Completes</th>
+                            <th style="padding:8px; text-align:right;">Share %</th>
+                            <th style="padding:8px; text-align:right;">Spend</th>
+                            <th style="padding:8px; text-align:right;">CPLE</th>
+                        </tr>
+                    </thead>
+                    <tbody>${tableRows}</tbody>
+                </table>
+                <p style="font-size:11px; color:#6b7280; margin-top:8px;"><em>CPLE = Cost per App Complete (Spend ÷ Completes). Lower is better.</em></p>`;
+            }
+
+            // VCR / Video completion rate handler
+            if (q.includes('vcr') || q.includes('video completion') || q.includes('completion rate') ||
+                (q.includes('video') && (q.includes('highest') || q.includes('best') || q.includes('rate')))) {
+                const videoPartners = allPartners.filter(p =>
+                    p.completeViews > 0 && p.impressions > 0 && p.spend > 0 &&
+                    p.mediaType && p.mediaType.toLowerCase() !== 'total'
+                );
+
+                if (videoPartners.length === 0) {
+                    return `<p>No partners in your data have both <strong>impressions</strong> and <strong>complete views</strong> data needed to calculate VCR. This metric is typically available for video partners (CTV, OLV, Standard Video).</p>`;
+                }
+
+                // Calculate VCR for each partner
+                const withVCR = videoPartners.map(p => ({
+                    ...p,
+                    vcr: p.impressions > 0 ? (p.completeViews / p.impressions * 100) : 0,
+                    cpcv: p.completeViews > 0 ? p.spend / p.completeViews : 0
+                })).sort((a, b) => b.vcr - a.vcr);
+
+                const avgVCR = withVCR.reduce((s, p) => s + p.vcr, 0) / withVCR.length;
+
+                let tableRows = '';
+                withVCR.forEach(p => {
+                    const vcrColor = p.vcr >= avgVCR ? '#059669' : (p.vcr >= avgVCR * 0.75 ? '#d97706' : '#dc2626');
+                    const bar = Math.min(p.vcr, 100);
+                    tableRows += `<tr style="border-bottom:1px solid #e5e7eb;">
+                        <td style="padding:6px 8px; font-weight:500;">${p.partner}</td>
+                        <td style="padding:6px 8px; color:#6b7280;">${p.mediaType}</td>
+                        <td style="padding:6px 8px; text-align:right;">
+                            <div style="display:flex; align-items:center; justify-content:flex-end; gap:6px;">
+                                <div style="width:60px; height:8px; background:#e5e7eb; border-radius:4px; overflow:hidden;">
+                                    <div style="width:${bar}%; height:100%; background:${vcrColor}; border-radius:4px;"></div>
+                                </div>
+                                <span style="color:${vcrColor}; font-weight:600; min-width:45px; text-align:right;">${p.vcr.toFixed(1)}%</span>
+                            </div>
+                        </td>
+                        <td style="padding:6px 8px; text-align:right;">${p.completeViews.toLocaleString()}</td>
+                        <td style="padding:6px 8px; text-align:right;">${(p.impressions/1e6).toFixed(2)}M</td>
+                        <td style="padding:6px 8px; text-align:right;">$${p.cpcv.toFixed(2)}</td>
+                    </tr>`;
+                });
+
+                return `<p><strong>Video Completion Rate (VCR) by Partner</strong></p>
+                <p style="font-size:12px; margin:6px 0;"><strong>${withVCR[0].partner}</strong> has the highest VCR at <strong>${withVCR[0].vcr.toFixed(1)}%</strong>. Average VCR across all video partners: <strong>${avgVCR.toFixed(1)}%</strong>.</p>
+                <table style="width:100%; border-collapse:collapse; font-size:11px; margin-top:10px;">
+                    <thead>
+                        <tr style="background:#003168; color:white;">
+                            <th style="padding:8px; text-align:left;">Partner</th>
+                            <th style="padding:8px; text-align:left;">Media Type</th>
+                            <th style="padding:8px; text-align:right;">VCR %</th>
+                            <th style="padding:8px; text-align:right;">Completes</th>
+                            <th style="padding:8px; text-align:right;">Impressions</th>
+                            <th style="padding:8px; text-align:right;">CPCV</th>
+                        </tr>
+                    </thead>
+                    <tbody>${tableRows}</tbody>
+                </table>
+                <p style="font-size:11px; color:#6b7280; margin-top:8px;"><em>VCR = Complete Views ÷ Impressions. Higher is better. CPCV = Cost per Complete View.</em></p>`;
+            }
+
             // Default response
             return `<p>Based on your campaign data, here's what I can tell you:</p>
             <ul>
                 <li><strong>Total investment:</strong> ${formatCurrency(ctx.totalSpend)} across ${ctx.partnerCount} partners</li>
                 <li><strong>Blended CPM:</strong> $${ctx.avgCPM.toFixed(2)}</li>
                 <li><strong>Top partner by spend:</strong> ${ctx.topPartners[0]?.partner || 'N/A'}</li>
-                <li><strong>Lowest CPM partner:</strong> ${ctx.lowestCPM[0]?.partner || 'N/A'} at $${ctx.lowestCPM[0]?.cpm.toFixed(2)} CPM</li>
+                <li><strong>Lowest CPM partner:</strong> ${ctx.lowestCPM[0]?.partner || 'N/A'} at $${ctx.lowestCPM[0]?.cpm?.toFixed(2) || '0.00'} CPM</li>
             </ul>
             <p>I can help you analyze specific partners, media types, trends, or provide optimization recommendations. What would you like to explore?</p>`;
         }
@@ -4657,10 +5237,10 @@
                         <p>Hello! I'm your Marketing Intelligence Assistant. I've analyzed your campaign data and I'm ready to help you understand your results.</p>
                         <p>You can ask me questions like:</p>
                         <ul>
-                            <li>Break down performance by Line of Business</li>
-                            <li>Which partners are optimizing toward consideration KPIs?</li>
-                            <li>What correlations exist between my performance and industry trends?</li>
-                            <li>How can I optimize my media spend?</li>
+                            <li>Who are my top performing partners?</li>
+                            <li>How are my KPIs trending week over week?</li>
+                            <li>Which partners have the highest CPMs?</li>
+                            <li>What recommendations do you have to optimize my campaign?</li>
                         </ul>
                     </div>
                 </div>
