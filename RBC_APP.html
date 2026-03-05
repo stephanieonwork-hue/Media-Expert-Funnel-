@@ -225,12 +225,9 @@
             margin-bottom: 16px;
             overflow-x: auto;
         }
-        .kpi-grid > .kpi-card, #kpi-blended-container > .kpi-card {
-            flex: 1 1 0;
-            min-width: 120px;
-        }
-        #kpi-blended-container {
-            display: contents;
+        .kpi-grid > .kpi-card {
+            flex: 1 1 auto;
+            min-width: fit-content;
         }
 
         .kpi-card {
@@ -238,41 +235,87 @@
             border-radius: 8px;
             padding: 16px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            overflow: hidden;
         }
 
-        /* KPI Filter Bar */
-        #kpi-filter-bar {
+        /* KPI Selector Dropdown */
+        #kpi-selector-bar {
             display: none;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
             margin-bottom: 10px;
-            flex-wrap: wrap;
+            position: relative;
         }
-        #kpi-filter-bar .kpi-filter-label {
+        #kpi-selector-bar .kpi-filter-label {
             font-size: 10px;
             font-weight: 600;
             text-transform: uppercase;
             color: var(--gray-500);
-            margin-right: 2px;
         }
-        .kpi-pill {
-            font-size: 10px;
+        #kpi-selector-btn {
+            font-size: 11px;
             font-weight: 600;
-            padding: 4px 10px;
-            border-radius: 20px;
+            padding: 5px 14px;
+            border-radius: 6px;
             border: 1.5px solid var(--rbc-blue);
-            background: var(--rbc-blue);
-            color: white;
-            cursor: pointer;
-            transition: all 0.15s ease;
-            user-select: none;
-        }
-        .kpi-pill.inactive {
             background: white;
             color: var(--rbc-blue);
+            cursor: pointer;
+            transition: all 0.15s ease;
         }
-        .kpi-pill:hover {
-            opacity: 0.85;
+        #kpi-selector-btn:hover {
+            background: var(--rbc-blue);
+            color: white;
+        }
+        .kpi-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            z-index: 100;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            max-height: 320px;
+            overflow-y: auto;
+            min-width: 240px;
+            padding: 6px 0;
+            margin-top: 4px;
+        }
+        .kpi-dropdown.open { display: block; }
+        .kpi-dropdown-group {
+            padding: 4px 12px 2px;
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--gray-400);
+            letter-spacing: 0.5px;
+        }
+        .kpi-dropdown label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            font-size: 12px;
+            color: var(--gray-700);
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+        .kpi-dropdown label:hover {
+            background: #f1f5f9;
+        }
+        .kpi-dropdown input[type="checkbox"] {
+            accent-color: var(--rbc-blue);
+            width: 14px;
+            height: 14px;
+            cursor: pointer;
+        }
+        .kpi-dropdown .kpi-metric-value {
+            margin-left: auto;
+            font-size: 10px;
+            color: var(--gray-400);
+            font-weight: 500;
         }
 
         .kpi-label {
@@ -281,6 +324,7 @@
             text-transform: uppercase;
             color: var(--gray-500);
             margin-bottom: 6px;
+            white-space: nowrap;
         }
 
         .kpi-value {
@@ -288,9 +332,10 @@
             font-weight: 800;
             color: var(--gray-900);
             line-height: 1;
+            white-space: nowrap;
         }
 
-        .kpi-sub { font-size: 11px; color: var(--gray-500); margin-top: 4px; }
+        .kpi-sub { font-size: 11px; color: var(--gray-500); margin-top: 4px; white-space: nowrap; }
 
         .kpi-card.highlight { background: var(--rbc-navy); }
         .kpi-card.highlight .kpi-label { color: rgba(255,255,255,0.7); }
@@ -1579,33 +1624,14 @@
                     </div>
                 </div>
 
-                <div id="kpi-filter-bar">
-                    <span class="kpi-filter-label">Show KPIs:</span>
+                <div id="kpi-selector-bar">
+                    <span class="kpi-filter-label">Dashboard KPIs:</span>
+                    <button id="kpi-selector-btn" onclick="toggleKpiDropdown()">Select KPIs ▾</button>
+                    <div id="kpi-selector-dropdown" class="kpi-dropdown"></div>
                 </div>
 
-                <div class="kpi-grid">
-                    <div class="kpi-card highlight" data-kpi-key="investment" title="Total media investment across all partners and campaigns">
-                        <div class="kpi-label">Total Investment</div>
-                        <div class="kpi-value" id="kpi-spend">$0</div>
-                        <div class="kpi-sub" id="kpi-spend-sub">Across all partners</div>
-                    </div>
-                    <div class="kpi-card" data-kpi-key="impressions" title="Total number of ad impressions delivered to audiences">
-                        <div class="kpi-label">Total Impressions</div>
-                        <div class="kpi-value" id="kpi-imps">0</div>
-                        <div class="kpi-sub">Total reach</div>
-                    </div>
-                    <div id="kpi-blended-container">
-                        <div class="kpi-card" title="Average Cost Per Mille (cost per 1,000 impressions) across all media">
-                            <div class="kpi-label">Blended CPM</div>
-                            <div class="kpi-value" id="kpi-cpm">$0</div>
-                            <div class="kpi-sub">Cost per thousand</div>
-                        </div>
-                    </div>
-                    <div class="kpi-card" data-kpi-key="partners" title="Number of unique media partners/vendors in this campaign">
-                        <div class="kpi-label">Active Partners</div>
-                        <div class="kpi-value" id="kpi-partners">0</div>
-                        <div class="kpi-sub">Media partners</div>
-                    </div>
+                <div class="kpi-grid" id="dashboard-kpi-grid">
+                    <!-- KPI cards dynamically generated by renderKpiSelectorBar() -->
                 </div>
 
                 <!-- Full Story Combined Chart -->
@@ -2082,6 +2108,8 @@
         let dataContext = {};
         let allLOBs = [];
         let allOptimizingKPIs = [];
+        let allMetricTotals = {}; // { 'Spend': 12345, 'Impressions': 5000000, ... }
+        let allMetricNames = new Set(); // Every metric name found in the Excel (including rate metrics)
 
         // ============================================
         // Chart.js Configuration
@@ -2205,7 +2233,7 @@
                         const raw = XLSX.utils.sheet_to_json(sheet, { header: 1 });
                         const result = parseExcelData(raw);
 
-                        resolve({ name, partners: result.partners, weekly: result.weekly, weekLabels: result.weekLabels });
+                        resolve({ name, partners: result.partners, weekly: result.weekly, weekLabels: result.weekLabels, metricTotals: result.metricTotals || {}, metricNames: result.metricNames || [] });
                     } catch (err) { reject(err); }
                 };
                 reader.readAsArrayBuffer(file);
@@ -2243,6 +2271,8 @@
         function parseStandardReport(raw) {
             const partners = [];
             const weeklyTotals = {};
+            const metricTotals = {};
+            const metricNames = new Set();
             let currentPartner = null;
             let currentMediaType = null;
             let currentCampaign = null;
@@ -2318,6 +2348,18 @@
                     return sum;
                 }
 
+                // Track all metric names for KPI selector dropdown
+                if (metric && getWeekTotal(row) > 0) {
+                    metricNames.add(metric);
+                }
+                // Accumulate raw metric totals for KPI selector (skip rate metrics — they can't be summed)
+                const metricTotal = getWeekTotal(row);
+                const isRateMetric = metric && (metric.toLowerCase().startsWith('cost per') || ['Ecpm', 'Viewable Ecpm', 'CPC'].includes(metric));
+                if (metricTotal > 0 && metric && !isRateMetric) {
+                    if (!metricTotals[metric]) metricTotals[metric] = 0;
+                    metricTotals[metric] += metricTotal;
+                }
+
                 if (metric === 'Spend') {
                     let total = getWeekTotal(row);
 
@@ -2346,6 +2388,7 @@
                                 completeViews: 0,
                                 cpcv: 0,
                                 cple: 0,
+                                extraMetrics: {},
                                 weeklyMetrics: {}
                             });
                         }
@@ -2365,6 +2408,17 @@
                             if (!weeklyTotals[wc.label]) weeklyTotals[wc.label] = 0;
                             weeklyTotals[wc.label] += weekSpend;
                         });
+                    }
+                }
+
+                // Store extra volume metrics on partner (App Start, Total App Complete, App ACVMA, DEP LOB LPE, etc.)
+                const volumeMetrics = ['App Start', 'Total App Complete', 'App ACVMA', 'DEP LOB LPE'];
+                if (volumeMetrics.includes(metric)) {
+                    let total = getWeekTotal(row);
+                    let existing = partners.find(p => `${p.partner}|${p.mediaType}` === partnerKey);
+                    if (existing && total > 0) {
+                        if (!existing.extraMetrics) existing.extraMetrics = {};
+                        existing.extraMetrics[metric] = (existing.extraMetrics[metric] || 0) + total;
                     }
                 }
 
@@ -2428,7 +2482,9 @@
             return {
                 partners: partners.filter(p => p.spend > 0),
                 weekly: weeklyData.map(w => w.value),
-                weekLabels: weeklyData.map(w => w.label)
+                weekLabels: weeklyData.map(w => w.label),
+                metricTotals,
+                metricNames: [...metricNames]
             };
         }
 
@@ -2439,6 +2495,8 @@
         function parseTableauExport(raw) {
             const partners = [];
             const weeklyTotals = {};
+            const metricTotals = {};
+            const metricNames = new Set();
             let currentPartner = null;
             let currentMediaType = null;
             let currentCampaign = null;
@@ -2507,6 +2565,18 @@
                     return sum;
                 }
 
+                // Track all metric names for KPI selector dropdown
+                if (metric && getMetricTotal(row) > 0) {
+                    metricNames.add(metric);
+                }
+                // Accumulate raw metric totals for KPI selector (skip rate metrics — they can't be summed)
+                const metricTotal = getMetricTotal(row);
+                const isRateMetric = metric && (metric.toLowerCase().startsWith('cost per') || ['Ecpm', 'Viewable Ecpm', 'CPC'].includes(metric));
+                if (metricTotal > 0 && metric && !isRateMetric) {
+                    if (!metricTotals[metric]) metricTotals[metric] = 0;
+                    metricTotals[metric] += metricTotal;
+                }
+
                 if (metric === 'Spend') {
                     let total = getMetricTotal(row);
 
@@ -2535,6 +2605,7 @@
                                 completeViews: 0,
                                 cpcv: 0,
                                 cple: 0,
+                                extraMetrics: {},
                                 weeklyMetrics: {}
                             });
                         }
@@ -2554,6 +2625,17 @@
                                 epSpend.weeklyMetrics[wc.label].spend += val;
                             });
                         }
+                    }
+                }
+
+                // Store extra volume metrics on partner
+                const volumeMetrics = ['App Start', 'Total App Complete', 'App ACVMA', 'DEP LOB LPE'];
+                if (volumeMetrics.includes(metric)) {
+                    let total = getMetricTotal(row);
+                    let existing = partners.find(p => `${p.partner}|${p.mediaType}` === partnerKey);
+                    if (existing && total > 0) {
+                        if (!existing.extraMetrics) existing.extraMetrics = {};
+                        existing.extraMetrics[metric] = (existing.extraMetrics[metric] || 0) + total;
                     }
                 }
 
@@ -2641,7 +2723,9 @@
             return {
                 partners: partners.filter(p => p.spend > 0),
                 weekly: weeklyData.map(w => w.value),
-                weekLabels
+                weekLabels,
+                metricTotals,
+                metricNames: [...metricNames]
             };
         }
 
@@ -2672,6 +2756,7 @@
                         completeViews: 0,
                         cpcv: 0,
                         cple: 0,
+                        extraMetrics: {},
                         weeklyMetrics: {}
                     };
                 }
@@ -2682,6 +2767,12 @@
                 g.clicks += (p.clicks || 0);
                 g.completeViews += (p.completeViews || 0);
                 if (p.cple > 0) g.cple = p.cple;
+                // Merge extra volume metrics (App Start, Total App Complete, etc.)
+                if (p.extraMetrics) {
+                    Object.entries(p.extraMetrics).forEach(([mk, mv]) => {
+                        g.extraMetrics[mk] = (g.extraMetrics[mk] || 0) + mv;
+                    });
+                }
                 // Merge weekly metrics for WOW comparison
                 if (p.weeklyMetrics) {
                     Object.entries(p.weeklyMetrics).forEach(([week, vals]) => {
@@ -2712,6 +2803,8 @@
             document.getElementById('loading').classList.add('show');
             campaigns = [];
             allPartners = [];
+            allMetricTotals = {};
+            allMetricNames = new Set();
 
             try {
                 for (const file of files) {
@@ -2719,6 +2812,17 @@
                         const data = await parseFile(file);
                         campaigns.push(data);
                         data.partners.forEach(p => allPartners.push({ ...p, campaign: data.name }));
+                        // Merge metric totals from this file
+                        if (data.metricTotals) {
+                            Object.entries(data.metricTotals).forEach(([k, v]) => {
+                                if (!allMetricTotals[k]) allMetricTotals[k] = 0;
+                                allMetricTotals[k] += v;
+                            });
+                        }
+                        // Merge metric names (all KPIs found in Excel, including rate metrics)
+                        if (data.metricNames) {
+                            data.metricNames.forEach(n => allMetricNames.add(n));
+                        }
                     }
                 }
 
@@ -2846,137 +2950,244 @@
 
         function renderDashboard() {
             const data = filteredPartners;
-            const totalSpend = data.reduce((s, p) => s + p.spend, 0);
-            const totalImps = data.reduce((s, p) => s + p.impressions, 0);
-            const avgCPM = totalImps > 0 ? totalSpend / totalImps * 1000 : 0;
 
-            document.getElementById('kpi-spend').textContent = formatCurrency(totalSpend);
-            document.getElementById('kpi-imps').textContent = formatNumber(totalImps);
-            document.getElementById('kpi-partners').textContent = data.length;
-
-            // Build blended KPI cards for each Optimized KPI found in data
-            const blendedKpis = {};
-            data.forEach(p => {
-                const kpi = (p.optimizingKPIs && p.optimizingKPIs[0]) || null;
-                let label;
-                if (kpi) {
-                    const kl = kpi.toLowerCase();
-                    if (kl.includes('viewable') && kl.includes('cpm')) label = 'eCPM';
-                    else if (kl === 'cpm') label = 'CPM';
-                    else if (kl === 'ecpm') label = 'eCPM';
-                    else if (kl === 'cpc') label = 'CPC';
-                    else if (kl === 'cpcv') label = 'CPCV';
-                    else if (kl === 'cple' || kl === 'cplpe') label = 'CPLE';
-                    else if (kl === 'cpa') label = 'CPA';
-                    else if (kl === 'dooh') label = 'CPM';
-                    else label = kpi;
-                } else {
-                    label = 'eCPM';
-                }
-                if (!blendedKpis[label]) blendedKpis[label] = { spend: 0, imps: 0, clicks: 0, completeViews: 0, viewableImps: 0 };
-                const g = blendedKpis[label];
-                g.spend += p.spend;
-                g.imps += p.impressions;
-                g.clicks += p.clicks || 0;
-                g.completeViews += p.completeViews || 0;
-                g.viewableImps += p.viewableImpressions || 0;
-            });
-
-            const kpiDescriptions = {
-                'eCPM': 'Cost per thousand (viewable)',
-                'CPM': 'Cost per thousand impressions',
-                'CPC': 'Cost per click',
-                'CPCV': 'Cost per completed view',
-                'CPLE': 'Cost per total app complete',
-                'CPA': 'Cost per acquisition'
-            };
-
-            let blendedHtml = '';
-            Object.entries(blendedKpis).forEach(([label, g]) => {
-                let val = 0;
-                if (label === 'CPC') val = g.clicks > 0 ? g.spend / g.clicks : 0;
-                else if (label === 'CPCV') val = g.completeViews > 0 ? g.spend / g.completeViews : 0;
-                else val = g.imps > 0 ? g.spend / g.imps * 1000 : 0;
-
-                const formatted = val > 0 ? '$' + (label === 'CPCV' ? val.toFixed(3) : val.toFixed(2)) : '--';
-                const desc = kpiDescriptions[label] || label;
-                blendedHtml += `<div class="kpi-card" data-kpi-key="${label}" title="Total ${label} across partners optimizing toward ${label}">
-                    <div class="kpi-label">Total ${label}</div>
-                    <div class="kpi-value">${formatted}</div>
-                    <div class="kpi-sub">${desc}</div>
-                </div>`;
-            });
-            document.getElementById('kpi-blended-container').innerHTML = blendedHtml;
-
-            renderKpiFilterBar();
+            // Render dynamic KPI cards via selector
+            renderKpiSelectorBar();
 
             renderCharts(data);
             renderTable(data);
         }
 
         /**
-         * Render KPI filter bar — toggle pills to show/hide dashboard KPI cards
+         * Toggle KPI dropdown open/close
          */
-        function renderKpiFilterBar() {
-            const bar = document.getElementById('kpi-filter-bar');
-            if (!bar) return;
+        function toggleKpiDropdown() {
+            const dd = document.getElementById('kpi-selector-dropdown');
+            if (dd) dd.classList.toggle('open');
+        }
 
-            // Collect all KPI cards and their keys
-            const grid = document.querySelector('.kpi-grid');
-            if (!grid) return;
-            const cards = grid.querySelectorAll('.kpi-card[data-kpi-key]');
-            const blendedCards = document.querySelectorAll('#kpi-blended-container .kpi-card');
+        // Close dropdown on click outside
+        document.addEventListener('click', (e) => {
+            const bar = document.getElementById('kpi-selector-bar');
+            const dd = document.getElementById('kpi-selector-dropdown');
+            if (dd && bar && !bar.contains(e.target)) dd.classList.remove('open');
+        });
 
-            // Build list: { key, label, element }
-            const kpiItems = [];
-            cards.forEach(c => {
-                const key = c.getAttribute('data-kpi-key');
-                const label = c.querySelector('.kpi-label')?.textContent || key;
-                kpiItems.push({ key, label, el: c });
+        /**
+         * Compute display value for a given metric key using current filtered data
+         */
+        function computeKpiValue(metricKey, data) {
+            const totalSpend = data.reduce((s, p) => s + p.spend, 0);
+            const totalImps = data.reduce((s, p) => s + p.impressions, 0);
+            const totalClicks = data.reduce((s, p) => s + (p.clicks || 0), 0);
+            const totalCompleteViews = data.reduce((s, p) => s + (p.completeViews || 0), 0);
+            const totalViewableImps = data.reduce((s, p) => s + (p.viewableImpressions || 0), 0);
+
+            const key = metricKey.toLowerCase().replace(/\s+/g, '');
+            // Full-precision formatting — no abbreviation (K/M), no premature rounding
+            const fmtCost = (v, decimals = 2) => v > 0 ? '$' + v.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals }) : '--';
+            const fmtNum = (v) => v > 0 ? Math.round(v).toLocaleString() : '--';
+            const fmtCurr = (v) => v > 0 ? '$' + v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '--';
+
+            // Core metrics
+            if (key === 'spend') return { value: fmtCurr(totalSpend), sub: 'Total investment' };
+            if (key === 'impressions') return { value: fmtNum(totalImps), sub: 'Total reach' };
+            if (key === 'partners') return { value: data.length, sub: 'Active partners' };
+
+            // Calculated rate metrics — computed from partner-level data
+            if (key === 'ecpm' || key === 'cpm') {
+                return { value: fmtCost(totalImps > 0 ? totalSpend / totalImps * 1000 : 0), sub: 'Cost per thousand' };
+            }
+            if (key === 'viewableimpressions') {
+                return { value: fmtNum(totalViewableImps), sub: 'Viewable impressions' };
+            }
+            if (key === 'viewableecpm') {
+                return { value: fmtCost(totalViewableImps > 0 ? totalSpend / totalViewableImps * 1000 : 0), sub: 'Viewable cost per thousand' };
+            }
+            if (key === 'clicks') return { value: fmtNum(totalClicks), sub: 'Total clicks' };
+            if (key === 'cpc') {
+                return { value: fmtCost(totalClicks > 0 ? totalSpend / totalClicks : 0), sub: 'Cost per click' };
+            }
+            if (key === 'completeviews') return { value: fmtNum(totalCompleteViews), sub: 'Completed views' };
+            if (key === 'costpercompleteview' || key === 'cpcv') {
+                return { value: fmtCost(totalCompleteViews > 0 ? totalSpend / totalCompleteViews : 0, 3), sub: 'Cost per completed view' };
+            }
+
+            // Volume metrics stored in partner extraMetrics (App Start, Total App Complete, etc.)
+            // Sum from partner-level data for accuracy
+            const extraTotal = data.reduce((s, p) => s + ((p.extraMetrics && p.extraMetrics[metricKey]) || 0), 0);
+            if (extraTotal > 0) {
+                return { value: fmtNum(extraTotal), sub: metricKey };
+            }
+
+            // "Cost per X" metrics — calculate from partner spend / partner volume
+            const isCostMetric = metricKey.toLowerCase().startsWith('cost per');
+            if (isCostMetric) {
+                // Strip "Cost per" and "Total" to find volume metric name
+                const volumeKey = metricKey.replace(/^cost per\s*/i, '').replace(/^total\s*/i, '').trim();
+                // Find matching volume key in extraMetrics
+                let matchedKey = null;
+                for (const p of data) {
+                    if (!p.extraMetrics) continue;
+                    for (const mk of Object.keys(p.extraMetrics)) {
+                        const norm = mk.toLowerCase().replace(/\s+/g, '');
+                        const search = volumeKey.toLowerCase().replace(/\s+/g, '');
+                        if (norm === search || norm === 'total' + search || 'total' + norm === search) {
+                            matchedKey = mk;
+                            break;
+                        }
+                    }
+                    if (matchedKey) break;
+                }
+
+                if (matchedKey) {
+                    // Cost per X = Total Spend ÷ Volume (totalSpend already computed at top)
+                    let metricVolume = 0;
+                    data.forEach(p => {
+                        const vol = (p.extraMetrics && p.extraMetrics[matchedKey]) || 0;
+                        if (vol > 0) metricVolume += vol;
+                    });
+                    if (metricVolume > 0) {
+                        return { value: fmtCost(totalSpend / metricVolume), sub: metricKey };
+                    }
+                }
+
+                // Also try completeViews for "Cost per Complete View" / "Cost per Total App Complete"
+                if (key.includes('completeview') || key.includes('appcomplete')) {
+                    if (totalCompleteViews > 0) {
+                        return { value: fmtCost(totalSpend / totalCompleteViews), sub: metricKey };
+                    }
+                }
+
+                return { value: '--', sub: metricKey };
+            }
+
+            // Fallback: raw total from allMetricTotals for any other volume metric
+            const rawVal = allMetricTotals[metricKey] || 0;
+            return { value: rawVal > 0 ? fmtNum(rawVal) : '--', sub: metricKey };
+        }
+
+        /**
+         * Render KPI selector dropdown and dynamically generate dashboard KPI cards
+         */
+        function renderKpiSelectorBar() {
+            const bar = document.getElementById('kpi-selector-bar');
+            const dropdown = document.getElementById('kpi-selector-dropdown');
+            const grid = document.getElementById('dashboard-kpi-grid');
+            if (!bar || !dropdown || !grid) return;
+
+            const data = filteredPartners;
+
+            // Build full list of available metrics directly from Excel metric names
+            // Core metrics always available
+            const coreMetrics = [
+                { key: 'Spend', label: 'Total Investment' },
+                { key: 'Impressions', label: 'Total Impressions' },
+                { key: 'partners', label: 'Active Partners' }
+            ];
+
+            // Performance metrics — every metric name from the Excel EXCEPT Spend/Impressions (already in core)
+            const skipKeys = new Set(['Spend', 'Impressions']);
+            const perfNames = new Set([...allMetricNames].filter(k => !skipKeys.has(k)));
+
+            // Also ensure extraMetrics volume keys and their "Cost per" variants are included
+            data.forEach(p => {
+                if (p.extraMetrics) {
+                    Object.keys(p.extraMetrics).forEach(k => {
+                        if (p.extraMetrics[k] > 0) {
+                            perfNames.add(k);
+                            perfNames.add('Cost per ' + k);
+                        }
+                    });
+                }
             });
-            blendedCards.forEach(c => {
-                const key = c.getAttribute('data-kpi-key') || c.querySelector('.kpi-label')?.textContent?.replace('Total ', '') || '';
-                if (!key) return;
-                c.setAttribute('data-kpi-key', key);
-                const label = c.querySelector('.kpi-label')?.textContent || key;
-                kpiItems.push({ key, label, el: c });
-            });
+            // Ensure standard calculated metrics are included when data supports them
+            if (data.some(p => p.completeViews > 0)) {
+                perfNames.add('CompleteViews');
+                perfNames.add('Cost per Complete View');
+            }
+            if (data.some(p => p.clicks > 0)) { perfNames.add('Clicks'); perfNames.add('CPC'); }
+            if (data.some(p => p.impressions > 0)) { perfNames.add('Ecpm'); }
+            if (data.some(p => p.viewableImpressions > 0)) { perfNames.add('ViewableImpressions'); perfNames.add('Viewable Ecpm'); }
 
-            if (kpiItems.length === 0) return;
+            const perfMetrics = [...perfNames].map(k => ({ key: k, label: k }));
 
-            // Load saved state from localStorage
+            const allMetrics = [...coreMetrics, ...perfMetrics];
+
+            // Clean up old localStorage key from previous version
+            localStorage.removeItem('rbc_kpi_filter');
+
+            // Load saved selections (default: core metrics ON, others OFF)
             let saved = {};
-            try { saved = JSON.parse(localStorage.getItem('rbc_kpi_filter') || '{}'); } catch(e) {}
+            try { saved = JSON.parse(localStorage.getItem('rbc_kpi_selector') || '{}'); } catch(e) {}
 
-            // Build pills — keep the label span, replace everything after it
-            bar.innerHTML = '<span class="kpi-filter-label">Show KPIs:</span>';
-            kpiItems.forEach(item => {
-                const isActive = saved[item.key] !== false; // default ON
-                const pill = document.createElement('span');
-                pill.className = 'kpi-pill' + (isActive ? '' : ' inactive');
-                pill.textContent = item.label;
-                pill.setAttribute('data-filter-key', item.key);
+            // Build dropdown HTML
+            let html = '<div class="kpi-dropdown-group">Core</div>';
+            coreMetrics.forEach(m => {
+                const checked = saved[m.key] !== false ? 'checked' : ''; // default ON
+                const val = computeKpiValue(m.key, data);
+                html += `<label><input type="checkbox" data-kpi="${m.key}" ${checked}> ${m.label} <span class="kpi-metric-value">${val.value}</span></label>`;
+            });
 
-                // Apply initial visibility
-                item.el.style.display = isActive ? '' : 'none';
-
-                pill.addEventListener('click', () => {
-                    const isNowActive = pill.classList.toggle('inactive');
-                    // isNowActive is true when class was ADDED (meaning now inactive)
-                    const visible = !isNowActive;
-                    item.el.style.display = visible ? '' : 'none';
-
-                    // Save to localStorage
-                    let state = {};
-                    try { state = JSON.parse(localStorage.getItem('rbc_kpi_filter') || '{}'); } catch(e) {}
-                    state[item.key] = visible;
-                    localStorage.setItem('rbc_kpi_filter', JSON.stringify(state));
+            if (perfMetrics.length > 0) {
+                html += '<div class="kpi-dropdown-group" style="margin-top:4px; border-top:1px solid #e5e7eb; padding-top:6px;">Performance</div>';
+                perfMetrics.forEach(m => {
+                    const checked = saved[m.key] === true ? 'checked' : ''; // default OFF
+                    const val = computeKpiValue(m.key, data);
+                    html += `<label><input type="checkbox" data-kpi="${m.key}" ${checked}> ${m.label} <span class="kpi-metric-value">${val.value}</span></label>`;
                 });
+            }
 
-                bar.appendChild(pill);
+            dropdown.innerHTML = html;
+
+            // Render KPI cards based on selections
+            renderSelectedKpiCards(data, allMetrics, saved);
+
+            // Attach checkbox listeners
+            dropdown.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                cb.addEventListener('change', () => {
+                    let state = {};
+                    try { state = JSON.parse(localStorage.getItem('rbc_kpi_selector') || '{}'); } catch(e) {}
+                    state[cb.dataset.kpi] = cb.checked;
+                    localStorage.setItem('rbc_kpi_selector', JSON.stringify(state));
+                    renderSelectedKpiCards(data, allMetrics, state);
+                });
             });
 
             bar.style.display = 'flex';
+        }
+
+        /**
+         * Render KPI cards in the grid based on selected metrics
+         */
+        function renderSelectedKpiCards(data, allMetrics, saved) {
+            const grid = document.getElementById('dashboard-kpi-grid');
+            if (!grid) return;
+
+            // Determine which are selected — core defaults ON, performance defaults OFF
+            const coreKeys = new Set(['Spend', 'Impressions', 'partners']);
+            const selected = allMetrics.filter(m => {
+                if (coreKeys.has(m.key)) return saved[m.key] !== false;
+                return saved[m.key] === true;
+            });
+
+            // Build cards as HTML string
+            let cardsHtml = '';
+            selected.forEach(m => {
+                try {
+                    const val = computeKpiValue(m.key, data);
+                    const isHighlight = m.key === 'Spend';
+                    cardsHtml += `<div class="kpi-card${isHighlight ? ' highlight' : ''}" data-kpi-key="${m.key}" title="${m.label}">
+                        <div class="kpi-label">${m.label}</div>
+                        <div class="kpi-value">${val.value}</div>
+                        <div class="kpi-sub">${val.sub}</div>
+                    </div>`;
+                } catch(e) {
+                    console.error('[KPI Card Error]', m.key, e);
+                }
+            });
+
+            grid.innerHTML = cardsHtml;
         }
 
         /**
@@ -5313,6 +5524,7 @@
             dataContext = {};
             allLOBs = [];
             allOptimizingKPIs = [];
+            allMetricTotals = {};
             document.getElementById('executive-summary-banner').innerHTML = '';
             document.getElementById('exec-summary-container').innerHTML = '';
 
@@ -6779,7 +6991,7 @@
                 pdf.text('Report', pageWidth / 2, 102, { align: 'center' });
                 
                 // Campaign info if available
-                const campaignInfo = document.getElementById('kpi-spend-sub')?.textContent || '';
+                const campaignInfo = campaigns.length > 0 ? campaigns.map(c => c.name).join(', ') : '';
                 if (campaignInfo && campaignInfo !== 'Across all partners') {
                     pdf.setFontSize(12);
                     pdf.setFont('helvetica', 'normal');
@@ -6841,21 +7053,13 @@
                 pdf.setFont('helvetica', 'bold');
                 pdf.text('Key Performance Indicators', margin + halfWidth + 4, tableStartY);
                 
-                const kpiCards = document.querySelectorAll('#kpi-blended-container .kpi-card');
-                const isVisible = (el) => el && el.style.display !== 'none';
+                const allKpiCards = document.querySelectorAll('#dashboard-kpi-grid .kpi-card');
                 const kpiData = [['Metric', 'Value']];
-                const investCard = document.querySelector('.kpi-card[data-kpi-key="investment"]');
-                if (isVisible(investCard)) kpiData.push(['Investment', document.getElementById('kpi-spend')?.textContent || '$0']);
-                const impsCard = document.querySelector('.kpi-card[data-kpi-key="impressions"]');
-                if (isVisible(impsCard)) kpiData.push(['Impressions', document.getElementById('kpi-imps')?.textContent || '0']);
-                kpiCards.forEach(card => {
-                    if (!isVisible(card)) return;
+                allKpiCards.forEach(card => {
                     const label = card.querySelector('.kpi-label')?.textContent || '';
-                    const value = card.querySelector('.kpi-value')?.textContent || '$0';
-                    kpiData.push([label, value]);
+                    const value = card.querySelector('.kpi-value')?.textContent || '--';
+                    if (label) kpiData.push([label, value]);
                 });
-                const partnersCard = document.querySelector('.kpi-card[data-kpi-key="partners"]');
-                if (isVisible(partnersCard)) kpiData.push(['Partners', document.getElementById('kpi-partners')?.textContent || '0']);
                 
                 pdf.autoTable({
                     startY: tableStartY + 2,
