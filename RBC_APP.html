@@ -5399,32 +5399,35 @@
                 </ul>`; 
             }
 
-            // App completes / CPLE handler
+            // App completes / CPLE handler — uses "Total App Complete" from extraMetrics (not CompleteViews which is video completions)
             if (q.includes('app complete') || q.includes('cple') || (q.includes('most') && q.includes('completes'))) {
-                const withCompletes = allPartners.filter(p => p.completeViews > 0 && p.spend > 0 && p.mediaType && p.mediaType.toLowerCase() !== 'total');
+                const getAppCompletes = (p) => (p.extraMetrics && p.extraMetrics['Total App Complete']) || 0;
+                const withCompletes = allPartners.filter(p => getAppCompletes(p) > 0 && p.spend > 0 && p.mediaType && p.mediaType.toLowerCase() !== 'total');
                 if (withCompletes.length === 0) {
-                    return `<p>No partners in your data have <strong>app complete</strong> (complete views) data. This metric is typically available for partners optimizing toward CPLE or CPCV.</p>`;
+                    return `<p>No partners in your data have <strong>Total App Complete</strong> data. This metric is typically available for partners optimizing toward app completions.</p>`;
                 }
 
-                const sorted = [...withCompletes].sort((a, b) => b.completeViews - a.completeViews);
-                const totalCompletes = sorted.reduce((s, p) => s + p.completeViews, 0);
+                const sorted = [...withCompletes].sort((a, b) => getAppCompletes(b) - getAppCompletes(a));
+                const totalCompletes = sorted.reduce((s, p) => s + getAppCompletes(p), 0);
 
                 let tableRows = '';
                 sorted.forEach(p => {
-                    const cple = p.completeViews > 0 ? p.spend / p.completeViews : 0;
-                    const share = totalCompletes > 0 ? (p.completeViews / totalCompletes * 100) : 0;
+                    const appCompletes = getAppCompletes(p);
+                    const cple = appCompletes > 0 ? p.spend / appCompletes : 0;
+                    const share = totalCompletes > 0 ? (appCompletes / totalCompletes * 100) : 0;
                     tableRows += `<tr style="border-bottom:1px solid #e5e7eb;">
                         <td style="padding:6px 8px; font-weight:500;">${p.partner}</td>
                         <td style="padding:6px 8px; color:#6b7280;">${p.mediaType}</td>
-                        <td style="padding:6px 8px; text-align:right; font-weight:600;">${p.completeViews.toLocaleString()}</td>
+                        <td style="padding:6px 8px; text-align:right; font-weight:600;">${Math.round(appCompletes).toLocaleString()}</td>
                         <td style="padding:6px 8px; text-align:right;">${share.toFixed(1)}%</td>
                         <td style="padding:6px 8px; text-align:right;">${formatCurrency(p.spend)}</td>
                         <td style="padding:6px 8px; text-align:right;">$${cple.toFixed(2)}</td>
                     </tr>`;
                 });
 
+                const topCompletes = getAppCompletes(sorted[0]);
                 return `<p><strong>Partners by App Completes</strong></p>
-                <p style="font-size:12px; margin:6px 0;"><strong>${sorted[0].partner}</strong> leads with <strong>${sorted[0].completeViews.toLocaleString()}</strong> app completes (${(sorted[0].completeViews / totalCompletes * 100).toFixed(1)}% of total). Total across all partners: <strong>${totalCompletes.toLocaleString()}</strong>.</p>
+                <p style="font-size:12px; margin:6px 0;"><strong>${sorted[0].partner}</strong> leads with <strong>${Math.round(topCompletes).toLocaleString()}</strong> app completes (${(topCompletes / totalCompletes * 100).toFixed(1)}% of total). Total across all partners: <strong>${Math.round(totalCompletes).toLocaleString()}</strong>.</p>
                 <table style="width:100%; border-collapse:collapse; font-size:11px; margin-top:10px;">
                     <thead>
                         <tr style="background:#003168; color:white;">
