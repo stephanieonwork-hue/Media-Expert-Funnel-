@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>L'Oréal Skincare — Accelerating Competitive Growth | Omnicom</title>
+    <style>
+        :root {
+            --navy: #0f1b2d;
+            --navy-light: #1a2b45;
+            --white: #ffffff;
+            --off-white: #f4f6f9;
+            --gold: #c8a254;
+            --gold-light: #e8d5a0;
+            --coral: #e8735a;
+            --teal: #2aa198;
+            --gray: #6b7a8d;
+            --gray-light: #d0d7e0;
+            --text: #2c3e50;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--text);
+            line-height: 1.6;
+            background: var(--off-white);
+        }
+
+        /* ── Hero ─────────────────────────────── */
+        .hero {
+            background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+            color: var(--white);
+            padding: 64px 40px 96px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background: var(--white);
+            clip-path: ellipse(55% 100% at 50% 100%);
+        }
+        .hero-label {
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            font-size: 0.75rem;
+            color: var(--gold);
+            margin-bottom: 16px;
+        }
+        .hero h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            letter-spacing: -0.5px;
+            max-width: 720px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .hero h1 span { color: var(--gold); }
+        .hero .hero-sub {
+            font-size: 1.1rem;
+            opacity: 0.85;
+            max-width: 620px;
+            margin: 0 auto 28px;
+        }
+        .hero .hero-cta {
+            display: inline-block;
+            background: var(--gold);
+            color: var(--navy);
+            padding: 14px 36px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            text-decoration: none;
+            letter-spacing: 0.5px;
+            transition: transform 0.15s;
+        }
+        .hero .hero-cta:hover { transform: translateY(-2px); }
+
+        /* ── Container ────────────────────────── */
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 0 32px;
+        }
+
+        /* ── Section shared ───────────────────── */
+        section { padding: 56px 0; }
+        .section-tag {
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            letter-spacing: 3px;
+            color: var(--gold);
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        .section-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--navy);
+            margin-bottom: 20px;
+        }
+        .section-subtitle {
+            font-size: 1rem;
+            color: var(--gray);
+            max-width: 700px;
+            margin-bottom: 32px;
+        }
+
+        /* ── Why Omnicom / Capabilities ────────── */
+        .why-omnicom { background: var(--white); }
+        .capability-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-top: 28px;
+        }
+        .capability-card {
+            background: var(--off-white);
+            border-radius: 12px;
+            padding: 32px 24px;
+            text-align: center;
+            border-top: 3px solid var(--gold);
+            transition: box-shadow 0.2s;
+        }
+        .capability-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
+        .capability-card .cap-icon {
+            font-size: 2rem;
+            margin-bottom: 14px;
+        }
+        .capability-card h3 {
+            font-size: 1.05rem;
+            color: var(--navy);
+            margin-bottom: 8px;
+        }
+        .capability-card p {
+            font-size: 0.85rem;
+            color: var(--gray);
+        }
+
+        /* ── Opportunity ─────────────────────── */
+        .opportunity { background: var(--off-white); }
+        .opportunity-content {
+            display: flex;
+            gap: 40px;
+            align-items: flex-start;
+            margin-top: 24px;
+        }
+        .opportunity-text {
+            flex: 1;
+        }
+        .opportunity-text p {
+            font-size: 0.95rem;
+            color: var(--gray);
+            margin-bottom: 16px;
+        }
+        .opportunity-highlights {
+            flex-shrink: 0;
+            width: 280px;
+            background: var(--navy);
+            color: var(--white);
+            border-radius: 12px;
+            padding: 28px;
+        }
+        .opportunity-highlights h4 {
+            color: var(--gold);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 16px;
+        }
+        .highlight-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .highlight-item:last-child { margin-bottom: 0; }
+        .highlight-check {
+            color: var(--gold);
+            font-size: 1rem;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        .highlight-item p {
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+
+        /* ── Insight banner ───────────────────── */
+        .insight-banner {
+            background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+            color: var(--white);
+            padding: 40px 0;
+        }
+        .insight-inner {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+        .insight-icon {
+            flex-shrink: 0;
+            width: 56px;
+            height: 56px;
+            background: var(--gold);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        .insight-inner p {
+            font-size: 1.05rem;
+            line-height: 1.7;
+            opacity: 0.92;
+        }
+        .insight-inner strong { color: var(--gold); }
+
+        /* ── How We'll Get You There / Steps ──── */
+        .framework { background: var(--white); }
+        .steps {
+            margin-top: 36px;
+            position: relative;
+        }
+        .steps::before {
+            content: '';
+            position: absolute;
+            left: 27px;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(to bottom, var(--gold), var(--coral));
+            border-radius: 3px;
+        }
+        .step {
+            display: flex;
+            gap: 28px;
+            margin-bottom: 40px;
+            position: relative;
+        }
+        .step:last-child { margin-bottom: 0; }
+        .step-number {
+            flex-shrink: 0;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--navy);
+            color: var(--gold);
+            font-weight: 800;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 1;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .step-content {
+            background: var(--off-white);
+            border-radius: 12px;
+            padding: 28px 32px;
+            flex: 1;
+            transition: box-shadow 0.2s;
+        }
+        .step-content:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
+        .step-content h3 {
+            font-size: 1.15rem;
+            color: var(--navy);
+            margin-bottom: 8px;
+        }
+        .step-content p {
+            font-size: 0.92rem;
+            color: var(--gray);
+            margin-bottom: 12px;
+        }
+        .step-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .tag {
+            background: var(--white);
+            border: 1px solid var(--gray-light);
+            border-radius: 20px;
+            padding: 4px 14px;
+            font-size: 0.75rem;
+            color: var(--navy);
+            font-weight: 600;
+        }
+
+        /* ── Differentiators table ────────────── */
+        .differentiators { background: var(--off-white); }
+        .diff-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 28px;
+            background: var(--white);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        }
+        .diff-table th {
+            background: var(--navy);
+            color: var(--white);
+            text-align: left;
+            padding: 16px 20px;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .diff-table th:last-child { color: var(--gold); }
+        .diff-table td {
+            padding: 16px 20px;
+            font-size: 0.9rem;
+            border-bottom: 1px solid var(--off-white);
+            vertical-align: top;
+        }
+        .diff-table tr:last-child td { border-bottom: none; }
+        .diff-table td:last-child { color: var(--navy); font-weight: 600; }
+
+        /* ── Outcomes ─────────────────────────── */
+        .outcomes { background: var(--white); }
+        .outcome-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-top: 28px;
+        }
+        .outcome-card {
+            background: var(--off-white);
+            border-radius: 12px;
+            padding: 32px 24px;
+            text-align: center;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+        }
+        .outcome-card .icon {
+            font-size: 2rem;
+            margin-bottom: 12px;
+        }
+        .outcome-card h4 {
+            font-size: 1rem;
+            color: var(--navy);
+            margin-bottom: 8px;
+        }
+        .outcome-card p { font-size: 0.85rem; color: var(--gray); }
+
+        /* ── Next Steps ───────────────────────── */
+        .next-steps { background: var(--off-white); }
+        .timeline-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-top: 28px;
+        }
+        .timeline-card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 28px 24px;
+            position: relative;
+            border-bottom: 3px solid var(--gold);
+        }
+        .timeline-card .week-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--gold);
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .timeline-card h4 {
+            font-size: 1rem;
+            color: var(--navy);
+            margin-bottom: 8px;
+        }
+        .timeline-card p {
+            font-size: 0.82rem;
+            color: var(--gray);
+        }
+
+        /* ── CTA footer ───────────────────────── */
+        .cta {
+            background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+            color: var(--white);
+            text-align: center;
+            padding: 56px 0;
+        }
+        .cta h2 {
+            font-size: 1.6rem;
+            margin-bottom: 12px;
+        }
+        .cta h2 span { color: var(--gold); }
+        .cta p {
+            opacity: 0.8;
+            max-width: 520px;
+            margin: 0 auto 28px;
+            font-size: 0.95rem;
+        }
+        .cta-btn {
+            display: inline-block;
+            background: var(--gold);
+            color: var(--navy);
+            padding: 14px 36px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            text-decoration: none;
+            letter-spacing: 0.5px;
+        }
+
+        /* ── Footer ───────────────────────────── */
+        footer {
+            text-align: center;
+            padding: 24px;
+            font-size: 0.75rem;
+            color: var(--gray);
+            background: var(--off-white);
+        }
+
+        /* ── Responsive ───────────────────────── */
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 1.8rem; }
+            .capability-grid { grid-template-columns: 1fr; }
+            .opportunity-content { flex-direction: column; }
+            .opportunity-highlights { width: 100%; }
+            .outcome-grid { grid-template-columns: 1fr; }
+            .timeline-grid { grid-template-columns: 1fr; }
+            .steps::before { left: 23px; }
+            .step-number { width: 48px; height: 48px; font-size: 1rem; }
+            .diff-table { font-size: 0.82rem; }
+            .insight-inner { flex-direction: column; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ── Hero ──────────────────────────────── -->
+    <header class="hero">
+        <div class="container">
+            <p class="hero-label">Prepared by Omnicom for L'Oréal</p>
+            <h1>Accelerating L'Oréal Skincare to <span>Market Leadership</span></h1>
+            <p class="hero-sub">Your brand has the momentum. We have the analytics, tools, and strategic framework to turn that momentum into measurable share growth.</p>
+        </div>
+    </header>
+
+    <!-- ── Why Omnicom ───────────────────────── -->
+    <section class="why-omnicom">
+        <div class="container">
+            <p class="section-tag">Why Omnicom</p>
+            <h2 class="section-title">The capabilities behind the commitment</h2>
+            <p class="section-subtitle">Omnicom brings a proven suite of analytics and planning tools purpose-built to solve exactly this challenge — turning competitive ambition into a data-backed growth plan.</p>
+
+            <div class="capability-grid">
+                <div class="capability-card">
+                    <div class="cap-icon">📊</div>
+                    <h3>Marketing Mix Modeling</h3>
+                    <p>Proprietary econometric models that isolate the true revenue and share impact of every media channel — specific to your brand, your category, your data.</p>
+                </div>
+                <div class="capability-card">
+                    <div class="cap-icon">🔍</div>
+                    <h3>Competitive Intelligence</h3>
+                    <p>Deep SOV/SOM auditing and competitive benchmarking powered by industry-leading data partnerships, giving you a clear view of the landscape.</p>
+                </div>
+                <div class="capability-card">
+                    <div class="cap-icon">⚡</div>
+                    <h3>Scenario &amp; Optimization Engine</h3>
+                    <p>Simulate multiple growth pathways, optimize channel allocation in real time, and model competitive responses before committing a single dollar.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── The Opportunity ───────────────────── -->
+    <section class="opportunity">
+        <div class="container">
+            <p class="section-tag">The Opportunity</p>
+            <h2 class="section-title">L'Oréal is positioned for the next level of growth</h2>
+
+            <div class="opportunity-content">
+                <div class="opportunity-text">
+                    <p>L'Oréal has built strong brand equity and a loyal consumer base in skincare. The opportunity now is to translate that foundation into a stronger competitive position — closing the gap to the next tier of market leaders.</p>
+                    <p>Achieving that goal requires more than simply increasing media investment. Category-specific dynamics in skincare mean that the right combination of investment levels, channel mix, creative effectiveness, and market timing will outperform a spend-first approach every time.</p>
+                    <p>That's where Omnicom's analytics capabilities come in. We help you invest smarter — not just more — by grounding every recommendation in your actual performance data.</p>
+                </div>
+                <div class="opportunity-highlights">
+                    <h4>Key Growth Levers</h4>
+                    <div class="highlight-item">
+                        <span class="highlight-check">✓</span>
+                        <p>Optimized media investment calibrated to skincare-specific response curves</p>
+                    </div>
+                    <div class="highlight-item">
+                        <span class="highlight-check">✓</span>
+                        <p>Channel mix reallocation to maximize share impact per dollar</p>
+                    </div>
+                    <div class="highlight-item">
+                        <span class="highlight-check">✓</span>
+                        <p>Competitive gap targeting in high-opportunity segments</p>
+                    </div>
+                    <div class="highlight-item">
+                        <span class="highlight-check">✓</span>
+                        <p>Forward-looking scenarios that account for market dynamics</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Insight Banner ────────────────────── -->
+    <div class="insight-banner">
+        <div class="container">
+            <div class="insight-inner">
+                <div class="insight-icon">💡</div>
+                <p><strong>Our guiding principle:</strong> The most effective path to share growth isn't just "invest more" — it's <strong>"invest where each dollar drives the greatest competitive advantage."</strong> We build the analytical foundation to make that possible.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── How We'll Get You There ────────────── -->
+    <section class="framework" id="how">
+        <div class="container">
+            <p class="section-tag">How We'll Get You There</p>
+            <h2 class="section-title">Our four-phase engagement</h2>
+            <p class="section-subtitle">A structured, insight-led process that moves from understanding to action — delivering clear recommendations at every stage.</p>
+
+            <div class="steps">
+                <!-- Phase 1 -->
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Competitive Landscape Audit</h3>
+                        <p>We map the full SOV/SOM landscape across skincare to give you a precise view of where you stand — and where the biggest opportunities for share capture lie, by sub-category, channel, and audience segment.</p>
+                        <div class="step-tags">
+                            <span class="tag">SOV / SOM Mapping</span>
+                            <span class="tag">Gap Analysis</span>
+                            <span class="tag">Segment Decomposition</span>
+                            <span class="tag">Opportunity Sizing</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Phase 2 -->
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Custom Marketing Mix Model</h3>
+                        <p>We build an econometric model tailored to L'Oréal skincare that quantifies the true share impact of each media channel. This replaces industry-average benchmarks with insights specific to your brand's actual performance.</p>
+                        <div class="step-tags">
+                            <span class="tag">Econometric Modeling</span>
+                            <span class="tag">Channel-Level ROI</span>
+                            <span class="tag">Saturation Curves</span>
+                            <span class="tag">Brand-Specific Elasticity</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Phase 3 -->
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Scenario Planning &amp; Optimization</h3>
+                        <p>We simulate multiple growth pathways — accelerated, moderate, and efficiency-led — and optimize the channel mix within each scenario. You'll see exactly what it takes to reach your goal, with options that fit different investment appetites.</p>
+                        <div class="step-tags">
+                            <span class="tag">What-If Scenarios</span>
+                            <span class="tag">Investment Optimization</span>
+                            <span class="tag">Competitive Response Modeling</span>
+                            <span class="tag">Timeline Flexibility</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Phase 4 -->
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h3>Growth Roadmap &amp; Ongoing Partnership</h3>
+                        <p>We deliver an integrated recommendation combining investment levels, channel allocation, and timeline — with clear KPIs and tracking milestones. Your team receives a living planning model for ongoing optimization as market conditions evolve.</p>
+                        <div class="step-tags">
+                            <span class="tag">Investment Roadmap</span>
+                            <span class="tag">Channel Mix Plan</span>
+                            <span class="tag">KPI Framework</span>
+                            <span class="tag">Quarterly Recalibration</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── The Omnicom Difference ─────────────── -->
+    <section class="differentiators">
+        <div class="container">
+            <p class="section-tag">The Omnicom Difference</p>
+            <h2 class="section-title">Why our approach delivers more</h2>
+            <table class="diff-table">
+                <thead>
+                    <tr>
+                        <th>Traditional Approach</th>
+                        <th>The Omnicom Approach</th>
+                        <th>Your Advantage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Estimate a spend threshold based on industry benchmarks</td>
+                        <td>Investment + channel mix + timeline scenarios grounded in your actual data</td>
+                        <td>Actionable, not theoretical</td>
+                    </tr>
+                    <tr>
+                        <td>Apply generic ESOV rules across categories</td>
+                        <td>Skincare-specific media elasticity modeled from L'Oréal's own performance</td>
+                        <td>Precise, not estimated</td>
+                    </tr>
+                    <tr>
+                        <td>Deliver a single investment figure</td>
+                        <td>Multiple pathways with trade-offs clearly articulated for leadership</td>
+                        <td>Strategic flexibility</td>
+                    </tr>
+                    <tr>
+                        <td>Focus on media weight alone</td>
+                        <td>Integrated view across media, innovation, distribution, and pricing</td>
+                        <td>Holistic growth strategy</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- ── What You'll Receive ───────────────── -->
+    <section class="outcomes">
+        <div class="container">
+            <p class="section-tag">Deliverables</p>
+            <h2 class="section-title">What you'll receive</h2>
+
+            <div class="outcome-grid">
+                <div class="outcome-card">
+                    <div class="icon">🎯</div>
+                    <h4>Precise Investment Targets</h4>
+                    <p>Data-backed spend levels calibrated to L'Oréal's actual media response — not industry averages.</p>
+                </div>
+                <div class="outcome-card">
+                    <div class="icon">⚡</div>
+                    <h4>Optimized Channel Mix</h4>
+                    <p>Clear guidance on where each incremental dollar delivers the highest share return.</p>
+                </div>
+                <div class="outcome-card">
+                    <div class="icon">🗓️</div>
+                    <h4>Multiple Growth Pathways</h4>
+                    <p>Scenario-based timelines so your leadership team can choose the right pace and investment level.</p>
+                </div>
+                <div class="outcome-card">
+                    <div class="icon">🛡️</div>
+                    <h4>Competitive Resilience Plan</h4>
+                    <p>Forward-looking analysis of how competitors may respond — and strategies to protect your gains.</p>
+                </div>
+                <div class="outcome-card">
+                    <div class="icon">📐</div>
+                    <h4>Living Planning Model</h4>
+                    <p>An ongoing optimization tool your team can use for quarterly recalibration as the market evolves.</p>
+                </div>
+                <div class="outcome-card">
+                    <div class="icon">📋</div>
+                    <h4>Executive-Ready Narrative</h4>
+                    <p>A clear, defensible story for stakeholders explaining the strategy, the evidence, and the expected outcomes.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── CTA ───────────────────────────────── -->
+    <div class="cta">
+        <div class="container">
+            <h2>Let's build your path to <span>market leadership</span></h2>
+        </div>
+    </div>
+
+    <!-- ── Footer ────────────────────────────── -->
+    <footer>
+        <p>Omnicom &nbsp;|&nbsp; Confidential &nbsp;|&nbsp; Prepared for L'Oréal &nbsp;|&nbsp; March 2026</p>
+    </footer>
+
+</body>
+</html>
