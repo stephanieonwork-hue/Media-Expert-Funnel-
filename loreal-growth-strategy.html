@@ -110,29 +110,52 @@
         .callout p:last-child { margin-bottom: 0; }
         .callout strong { color: var(--navy); }
 
-        /* ── Approach cards ────────────────────── */
-        .approach-grid {
+        .callout.caution {
+            border-left-color: var(--coral);
+        }
+
+        /* ── Lever cards ─────────────────────────── */
+        .lever-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 16px;
             margin: 16px 0;
         }
-        .approach-card {
+        .lever-card {
             background: var(--white);
             border-radius: 10px;
             padding: 22px 20px;
-            border-top: 2.5px solid var(--gold);
+            border-top: 2.5px solid var(--gray-light);
         }
-        .approach-card h3 {
+        .lever-card.media { border-top-color: var(--gold); }
+        .lever-card h3 {
             font-size: 0.88rem;
             font-weight: 700;
             color: var(--navy);
             margin-bottom: 6px;
         }
-        .approach-card p {
+        .lever-card p {
             font-size: 0.82rem;
             color: var(--gray);
             margin-bottom: 0;
+        }
+        .lever-card .lever-tag {
+            display: inline-block;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+        .lever-card.media .lever-tag {
+            background: rgba(200, 162, 84, 0.15);
+            color: var(--gold);
+        }
+        .lever-card:not(.media) .lever-tag {
+            background: rgba(107, 122, 141, 0.12);
+            color: var(--gray);
         }
 
         /* ── Comparison row ────────────────────── */
@@ -147,7 +170,7 @@
             border-radius: 10px;
             padding: 20px;
         }
-        .compare-box.limited { border-top: 2.5px solid var(--coral); }
+        .compare-box.risky { border-top: 2.5px solid var(--coral); }
         .compare-box.recommended { border-top: 2.5px solid var(--green); }
         .compare-box h3 {
             font-size: 0.78rem;
@@ -156,7 +179,7 @@
             margin-bottom: 10px;
             font-weight: 700;
         }
-        .compare-box.limited h3 { color: var(--coral); }
+        .compare-box.risky h3 { color: var(--coral); }
         .compare-box.recommended h3 { color: var(--green); }
         .compare-box p {
             font-size: 0.82rem;
@@ -218,9 +241,9 @@
 
     <header class="header">
         <div class="header-inner">
-            <p class="header-label">Internal POV - Omnicom Growth Analytics</p>
-            <h1>L'Oreal Skincare: Moving from 4th to 3rd in SOM</h1>
-            <p>Our recommended approach for the spend-level question from the client team.</p>
+            <p class="header-label">Internal POV — Omnicom Growth Analytics</p>
+            <h1>L'Oréal Skincare: An Honest Assessment of the SOM Growth Question</h1>
+            <p>Our recommended framing for the client team's request on spend levels to move from 4th to 3rd.</p>
         </div>
     </header>
 
@@ -230,63 +253,105 @@
             <!-- ── The Ask ─────────────────────── -->
             <div class="section">
                 <p class="section-label">The Ask</p>
-                <h2>Can we recommend spending levels to move L'Oreal from 4th to 3rd in skincare SOM?</h2>
-                <p>The client team completed a competitive SOV/SOM audit. L'Oreal currently sits 4th in skincare market share and wants to reach 3rd. They're looking for a spend recommendation to get there.</p>
+                <h2>Can we recommend spending levels to move L'Oréal from 4th to 3rd in skincare SOM?</h2>
+                <p>The client team completed a competitive SOV/SOM audit. L'Oréal currently sits 4th in skincare market share and wants to reach 3rd. They're looking for a spend recommendation to get there.</p>
+                <p>Before answering that, we need to challenge the premise: <strong>is media spend the right lever?</strong> SOM rank is driven by multiple factors beyond SOV — pricing strategy, product portfolio, retailer placement, distribution, innovation cadence — and we don't have evidence that media weight is what's holding L'Oréal back.</p>
             </div>
 
-            <!-- ── The ESOV Shortcut ───────────── -->
+            <!-- ── The ESOV Question ──────────── -->
             <div class="section">
-                <p class="section-label">The Quick Answer</p>
-                <h2>The ESOV approach is directionally right, but limited</h2>
-                <p>The standard ESOV framework (excess share of voice drives share growth) gives us a starting point. If a 10% increase in SOV generates roughly 0.5% growth in SOM, we can reverse-engineer a spend target to close the gap. That math is solid as a back-of-napkin estimate.</p>
+                <p class="section-label">The ESOV Question</p>
+                <h2>We are not confident in the ESOV rule as a predictive model</h2>
+                <p>The standard ESOV framework (excess share of voice drives share growth) is often cited as a planning heuristic. But the underlying research (Binet & Field, Nielsen) is a cross-category meta-analysis — it describes a general tendency across hundreds of brands and categories, not a predictive formula for a specific brand in a specific market.</p>
+                <p>Reverse-engineering a spend target from a single elasticity coefficient (e.g., "10pt SOV increase = ~0.5% SOM growth") is not something we should present as a reliable forecast.</p>
+
+                <div class="callout caution">
+                    <p><strong>The key signal:</strong> If L'Oréal already has the highest ESOV in the category (SOV exceeding SOM by ~4pts) and is still sitting at 4th in share, that's actually evidence <em>against</em> the idea that more media spend will close the gap. It suggests the bottleneck is somewhere else — product mix, shelf placement, pricing, distribution, or some combination.</p>
+                    <p>If we deliver a spend number based on the ESOV rule, we risk over-promising a result that media investment alone cannot deliver. The client invests more, share doesn't move as projected, and our credibility takes the hit.</p>
+                </div>
 
                 <div class="callout">
-                    <p><strong>The problem:</strong> Applying a single industry-average elasticity across the board assumes a linear relationship between spend and share. In reality, channel mix matters enormously. A dollar in a high-elasticity channel (e.g., TV/video, retail media) will drive meaningfully more share than a dollar in a saturated one. The ESOV formula also doesn't account for diminishing returns, competitive response, or timing.</p>
-                    <p>If we deliver a spend number based only on the ESOV rule, we risk either significantly overstating or understating what's required, and the client won't have a plan for how to allocate it.</p>
+                    <p><strong>Additional limitations of the ESOV model:</strong> It doesn't account for diminishing returns, competitive response, channel mix differences, creative quality, or market timing. A single elasticity applied uniformly across a category this complex is not defensible as a planning tool.</p>
                 </div>
+            </div>
+
+            <!-- ── What Actually Drives SOM ──── -->
+            <div class="section">
+                <p class="section-label">The Bigger Picture</p>
+                <h2>SOM rank is driven by multiple levers — media is only one</h2>
+                <p>Before we anchor on a media spend recommendation, we should be clear-eyed about the full set of factors that determine share position in skincare.</p>
+
+                <div class="lever-grid">
+                    <div class="lever-card media">
+                        <span class="lever-tag">What we can size</span>
+                        <h3>Media Investment & Mix</h3>
+                        <p>SOV levels, channel allocation, flighting, creative weight. We can quantify media's contribution to share through MMM — but this is one input, not the whole answer.</p>
+                    </div>
+                    <div class="lever-card">
+                        <span class="lever-tag">Beyond media</span>
+                        <h3>Pricing & Promotion</h3>
+                        <p>Price positioning vs. competitors, promotional depth and frequency, price elasticity by channel and retailer. Often a larger share driver than media in CPG.</p>
+                    </div>
+                    <div class="lever-card">
+                        <span class="lever-tag">Beyond media</span>
+                        <h3>Product Portfolio & Innovation</h3>
+                        <p>SKU breadth, new product launches, formulation relevance to consumer trends (e.g., clean beauty, dermatological positioning). Category entry points matter.</p>
+                    </div>
+                    <div class="lever-card">
+                        <span class="lever-tag">Beyond media</span>
+                        <h3>Distribution & Shelf Placement</h3>
+                        <p>Retailer breadth, in-store visibility, shelf space, e-commerce presence. A brand can outspend competitors in media and still lose at the shelf.</p>
+                    </div>
+                </div>
+
+                <p>We aren't saying media doesn't matter — it does. But recommending a spend level as though it alone will move SOM position is a claim we can't support with confidence. The honest answer is that we need to understand all of these levers before making promises about rank movement.</p>
             </div>
 
             <!-- ── Two approaches ──────────────── -->
             <div class="section">
                 <p class="section-label">Our Recommendation</p>
-                <h2>Pair the SOV audit with a measurement-backed growth plan</h2>
-                <p>Rather than delivering a single spend figure, we should frame this as a two-part answer. The audit gives the "where are we" context. The modeling gives the "how do we get there" plan.</p>
+                <h2>Be honest about what media can and can't do — then offer what we can credibly deliver</h2>
+                <p>Rather than delivering a spend figure that implies a guaranteed SOM outcome, we should frame this honestly: media optimization is one lever among several, and we can help the client understand exactly what that lever can contribute. But we should not overstate it.</p>
 
                 <div class="compare">
-                    <div class="compare-box limited">
-                        <h3>ESOV-only approach</h3>
-                        <p>Single spend number based on industry-average elasticity.</p>
-                        <p>No guidance on channel allocation or timing.</p>
-                        <p>Assumes competitors hold steady.</p>
-                        <p>Hard to defend in a leadership presentation.</p>
+                    <div class="compare-box risky">
+                        <h3>What we should avoid</h3>
+                        <p>A single spend number based on the ESOV rule, positioned as a path to 3rd place.</p>
+                        <p>Projections that imply media alone will close the gap.</p>
+                        <p>Using a cross-category average as a brand-specific prediction.</p>
+                        <p>Over-promising a SOM outcome we can't guarantee, then losing credibility when it doesn't materialize.</p>
                     </div>
                     <div class="compare-box recommended">
-                        <h3>Recommended approach</h3>
-                        <p>Brand-specific response curves by channel, built from L'Oreal's own data.</p>
-                        <p>Optimized channel mix showing where each dollar has the most impact.</p>
-                        <p>Scenario-based pathways (accelerated vs. phased) with trade-offs clearly laid out.</p>
-                        <p>Defensible, data-backed story for the client's leadership.</p>
+                        <h3>What we should offer</h3>
+                        <p>Be upfront: media is one growth lever, but SOM rank depends on pricing, portfolio, distribution, and retail factors too.</p>
+                        <p>Quantify the media lever specifically — channel-level response curves from L'Oréal's own data, showing where reallocation can improve efficiency.</p>
+                        <p>Frame scenarios as "what media can contribute" rather than "what media will guarantee."</p>
+                        <p>Position Omnicom as the partner who gave them a realistic, credible answer — not the one who over-promised.</p>
                     </div>
                 </div>
             </div>
 
-            <!-- ── What it involves ────────────── -->
+            <!-- ── What we CAN deliver ─────────── -->
             <div class="section">
-                <p class="section-label">What This Involves</p>
-                <h2>Two core workstreams</h2>
+                <p class="section-label">What We Can Credibly Deliver</p>
+                <h2>Two workstreams, scoped honestly</h2>
 
-                <div class="approach-grid">
-                    <div class="approach-card">
-                        <h3>Competitive Landscape Audit</h3>
-                        <p>Map SOV/SOM across the skincare category by channel and sub-segment. Quantify the gap to 3rd position and identify where competitors are most vulnerable.</p>
+                <div class="compare">
+                    <div class="compare-box" style="border-top: 2.5px solid var(--gold);">
+                        <h3 style="color: var(--gold);">Competitive Landscape Audit</h3>
+                        <p>Map SOV/SOM across skincare by channel and sub-segment.</p>
+                        <p>Quantify the gap to 3rd position.</p>
+                        <p>Identify where competitors are strong on non-media factors (distribution, pricing) vs. where media is the differentiator.</p>
                     </div>
-                    <div class="approach-card">
-                        <h3>Marketing Mix Model + Scenario Planning</h3>
-                        <p>Build a skincare-specific MMM to quantify channel-level share elasticity. Use it to model investment scenarios that close the gap, with clear spend, mix, and timeline recommendations.</p>
+                    <div class="compare-box" style="border-top: 2.5px solid var(--gold);">
+                        <h3 style="color: var(--gold);">Media Contribution Analysis (MMM)</h3>
+                        <p>Build a skincare-specific model to quantify media's actual contribution to share.</p>
+                        <p>Show where reallocation across channels improves efficiency.</p>
+                        <p>Framed as diagnostic ("here's what media can do") — not as a guarantee of SOM movement.</p>
                     </div>
                 </div>
 
-                <p>The audit is likely already underway or near-complete. The MMM and scenario planning would be the incremental workstream we propose to the client as the path to a credible spend recommendation.</p>
+                <p>The audit may already be underway. The MMM would be the incremental workstream — but we should scope and position it as a diagnostic tool, not a crystal ball.</p>
             </div>
 
             <!-- ── Next Steps ──────────────────── -->
@@ -295,15 +360,19 @@
                     <h3>Suggested Next Steps</h3>
                     <div class="step-item">
                         <span class="step-num">1</span>
-                        <p>Align internally on whether we're comfortable proposing the MMM add-on scope to the client, and at what level of effort.</p>
+                        <p>Align internally on the honest message: we don't believe media spend alone can guarantee a move from 4th to 3rd, and we should say so directly.</p>
                     </div>
                     <div class="step-item">
                         <span class="step-num">2</span>
-                        <p>Draft a short response to the agency team explaining our POV: the ESOV math gives a starting point, but the real answer requires brand-specific modeling.</p>
+                        <p>Draft a response to the client team framing what we <em>can</em> deliver: a clear picture of media's contribution to SOM, where reallocation improves efficiency, and what the other growth levers look like.</p>
                     </div>
                     <div class="step-item">
                         <span class="step-num">3</span>
-                        <p>If the client is interested, scope a phased proposal: Phase 1 (audit) delivers competitive context; Phase 2 (MMM + scenarios) delivers the investment recommendation.</p>
+                        <p>If proposing an MMM engagement, scope it as diagnostic — "here's what media can contribute" — not predictive ("spend X to achieve Y share").</p>
+                    </div>
+                    <div class="step-item">
+                        <span class="step-num">4</span>
+                        <p>Consider proactively flagging the non-media factors (pricing, distribution, retail placement) as areas where the client may need other partners or internal workstreams to close the full gap.</p>
                     </div>
                 </div>
             </div>
